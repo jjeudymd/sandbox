@@ -7,6 +7,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
         <style>
             :root {
+                /* UMB Branding Guidelines Palette */
                 --umb-red: #C8102E; 
                 --umb-gold: #FFCD00; 
                 --umb-teal: #007698; 
@@ -15,6 +16,7 @@
                 --bg: #ffffff;
             }
             body {
+                /* Gotham font family requested for app body content */
                 font-family: "Gotham", -apple-system, system-ui, sans-serif;
                 background: var(--umb-light-gray);
                 margin: 0;
@@ -34,17 +36,20 @@
                 color: white;
             }
             .back-btn {
+                position: absolute;
+                left: 20px;
                 cursor: pointer;
                 font-size: 28px;
-                margin-right: 15px;
                 display: none;
                 color: white;
                 font-weight: bold;
+                line-height: 1;
             }
             header h1 {
                 margin: 0;
+                /* Hero font family requested for title text */
                 font-family: "Hero", -apple-system, sans-serif;
-                font-size: 1.1rem;
+                font-size: 1rem;
                 letter-spacing: 1px;
                 text-transform: uppercase;
                 font-weight: 800;
@@ -329,3 +334,60 @@
                 <div class="day-info">
                     <div class="day-name">${day.formattedDate}</div>
                     <div class="preview-text">AM: ${day.AM.title}</div>
+                    <div class="preview-text">PM: ${day.PM.title}</div>
+                </div>
+            `;
+                    list.appendChild(row);
+                });
+            }
+
+            function openDetails(index) {
+                currentIdx = index;
+                document.getElementById("homeView").style.display = "none";
+                document.getElementById("dayView").style.display = "block";
+                document.getElementById("backIcon").style.display = "block";
+                document.getElementById("headerTitle").innerText =
+                    "Session Detail";
+                setSession("AM");
+            }
+
+            function showHome() {
+                document.getElementById("homeView").style.display = "block";
+                document.getElementById("dayView").style.display = "none";
+                document.getElementById("backIcon").style.display = "none";
+                document.getElementById("headerTitle").innerText =
+                    "Conference Schedule";
+            }
+
+            function setSession(type) {
+                document
+                    .getElementById("amBtn")
+                    .classList.toggle("active", type === "AM");
+                document
+                    .getElementById("pmBtn")
+                    .classList.toggle("active", type === "PM");
+
+                const day = schedule[currentIdx];
+                const data = day[type];
+
+                document.getElementById("dateLabel").innerText =
+                    day.formattedDate;
+                document.getElementById("titleDisplay").innerText = data.title;
+                document.getElementById("urlDisplay").innerText = data.url;
+                document.getElementById("urlDisplay").href = data.url;
+                document.getElementById("credsDisplay").innerText = data.info;
+
+                qr.clear();
+                if (data.url) {
+                    document.getElementById("qrcode").style.display =
+                        "inline-block";
+                    qr.makeCode(data.url);
+                } else {
+                    document.getElementById("qrcode").style.display = "none";
+                }
+            }
+
+            init();
+        </script>
+    </body>
+</html>
