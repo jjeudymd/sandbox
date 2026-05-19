@@ -106,131 +106,126 @@
         </div>
     </div>
 </div>
-
 <script>
     const SHEET_ID = '1gNy8iWiCZ8t-A_CYoIfBCJqJUrqwiByhzJ0-e0df9as';
-    const GID = '0'; 
+    const GID = '0'; // Tab: "This Week"
     const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
 
-    let scheduleData = [];
-    let activeDayIndex = 0;
-    let activeSession = 'AM';
-    let qrGen = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
+    let schedule = [];
+    let currentIdx = 0;
+    let qr = new QRCode(document.getElementById("qrcode"), { width: 260, height: 260 });
 
-    async function loadData() {
+    async function init() {
         try {
-            const response = await fetch(DATA_URL);
-            const text = await response.text();
+            const res = await fetch(DATA_URL);
+            const text = await res.text();
             const json = JSON.parse(text.substr(47).slice(0, -2));
             const rows = json.table.rows;
 
-            scheduleData = rows.slice(2).map(r => {
-                const rawDate = r.c[0] ? r.c[0].v : null;
-                return {
-                    dateObj: parseDate(rawDate),
-                    formattedDate: formatDate(rawDate),
-                    AM: parseSession(r.c[2] ? r.c[2].v : ""),
-                    PM: parseSession(r.c[4] ? r.c[4].v : "")
-                };
-            }).filter(d => d.dateObj !== null);
+            // CRITICAL FIX: No longer slicing. We scan ALL rows and only include those with valid date objects.
+            schedule = rows.map(r => {
+                const dateVal = r.c[0] ? r.c[0].v : null;
+                // Verify if column A contains a Google Date object
+                if (dateVal && typeof dateVal === 'string' && dateVal.startsWith("Date")) {
+                    return {
+                        rawDate: dateVal,
+                        formattedDate: formatDate(dateVal),
+                        AM: parseContent(r.c[2] ? r.c[2].v : ""),
+                        PM: parseContent(r.c[4] ? r.c[4].v : "")
+                    };
+                }
+                return null;
+            }).filter(item => item !== null);
 
-            renderList();
+            renderHub();
             document.getElementById('status').style.display = 'none';
             document.getElementById('homeView').style.display = 'block';
         } catch (e) {
-            document.getElementById('status').innerText = "Unable to connect to schedule.";
+            document.getElementById('status').innerText = "Connection failed. Please check spreadsheet publication.";
         }
-    }
-
-    function parseDate(val) {
-        if (!val) return null;
-        // Handles "Date(2026,4,18)" format from Google JSON
-        if (typeof val === 'string' && val.includes('Date')) {
-            const parts = val.match(/\d+/g);
-            return new Date(parts[0], parts[1], parts[2]);
-        }
-        return new Date(val);
     }
 
     function formatDate(val) {
-        const d = parseDate(val);
+        // Formats Date(2026, 4, 18) -> MON, May 18
+        const parts = val.match(/\d+/g);
+        const d = new Date(parts[0], parts[1], parts[2]);
         const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return `${days[d.getDay()]}, ${months[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}`;
     }
 
-    function parseSession(text) {
+    function parseContent(text) {
         if (!text || text.toLowerCase().includes("no conference")) {
-            return { title: "No Conference", url: "", info: "", isPast: false };
+            return { title: "No Conference Scheduled", url: "", info: "" };
         }
         const lines = text.split('\n');
         const urlMatch = text.match(/https?:\/\/[^\s]+/);
+        const info = lines.filter(l => l.includes("ID") || l.includes("Passcode")).join(" | ");
         return { 
             title: lines[0].trim(), 
             url: urlMatch ? urlMatch[0] : "", 
-            info: lines.filter(l => l.includes("ID") || l.includes("Passcode")).join(" | ")
+            info: info 
         };
     }
 
-    function renderList() {
+    function renderHub() {
         const list = document.getElementById('weeklyList');
-        const now = new Date();
         list.innerHTML = '';
-        
-        scheduleData.forEach((day, index) => {
-            const isPastDay = day.dateObj.setHours(0,0,0,0) < now.setHours(0,0,0,0);
+        schedule.forEach((day, index) => {
             const row = document.createElement('div');
-            row.className = `day-row ${isPastDay ? 'is-past' : ''}`;
-            row.onclick = () => openDay(index);
+            row.className = 'day-row';
+            row.onclick = () => openDetails(index);
             row.innerHTML = `
                 <div class="calendar-icon">📅</div>
                 <div class="day-info">
                     <div class="day-name">${day.formattedDate}</div>
-                    <div class="preview-text">${day.AM.title} / ${day.PM.title}</div>
+                    <div class="preview-text">AM: ${day.AM.title}</div>
+                    <div class="preview-text">PM: ${day.PM.title}</div>
                 </div>
             `;
             list.appendChild(row);
         });
     }
 
-    function openDay(index) {
-        activeDayIndex = index;
+    function openDetails(index) {
+        currentIdx = index;
         document.getElementById('homeView').style.display = 'none';
         document.getElementById('dayView').style.display = 'block';
-        document.getElementById('backBtn').style.display = 'block';
-        toggleSession('AM');
+        document.getElementById('backIcon').style.display = 'block';
+        document.getElementById('headerTitle').innerText = "Session Detail";
+        setSession('AM');
     }
 
     function showHome() {
         document.getElementById('homeView').style.display = 'block';
         document.getElementById('dayView').style.display = 'none';
-        document.getElementById('backBtn').style.display = 'none';
+        document.getElementById('backIcon').style.display = 'none';
+        document.getElementById('headerTitle').innerText = "Conference Schedule";
     }
 
-    function toggleSession(type) {
-        activeSession = type;
+    function setSession(type) {
         document.getElementById('amBtn').classList.toggle('active', type === 'AM');
         document.getElementById('pmBtn').classList.toggle('active', type === 'PM');
         
-        const day = scheduleData[activeDayIndex];
-        const session = day[type];
+        const day = schedule[currentIdx];
+        const data = day[type];
         
-        document.getElementById('currentDayLabel').innerText = day.formattedDate;
-        document.getElementById('titleDisplay').innerText = session.title;
-        document.getElementById('urlDisplay').innerText = session.url;
-        document.getElementById('urlDisplay').href = session.url;
-        document.getElementById('credsDisplay').innerText = session.info;
+        document.getElementById('dateLabel').innerText = day.formattedDate;
+        document.getElementById('titleDisplay').innerText = data.title;
+        document.getElementById('urlDisplay').innerText = data.url;
+        document.getElementById('urlDisplay').href = data.url;
+        document.getElementById('credsDisplay').innerText = data.info;
 
-        qrGen.clear();
-        if (session.url) {
+        qr.clear();
+        if (data.url) {
             document.getElementById('qrcode').style.display = 'inline-block';
-            qrGen.makeCode(session.url);
+            qr.makeCode(data.url);
         } else {
             document.getElementById('qrcode').style.display = 'none';
         }
     }
 
-    loadData();
+    init();
 </script>
 </body>
 </html>
