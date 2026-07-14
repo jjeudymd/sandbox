@@ -1,0 +1,1194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hanging Protocol Designer</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style> html,body,#root { min-height:100%; background:#020617; } </style>
+</head>
+<body>
+<div id="root"></div>
+<div id="fallback" style="display:none;color:#e2e8f0;font-family:sans-serif;padding:2rem;max-width:640px;margin:0 auto;">
+  <h2 style="color:#f87171;">This page couldn't load its scripts.</h2>
+  <p>Your network appears to be blocking one of: <code>cdn.tailwindcss.com</code>, <code>unpkg.com</code>. Check your browser console (F12) for the blocked URL, or try a different network.</p>
+</div>
+<script>
+  window.addEventListener("error", function (e) {
+    if (!window.React || !window.ReactDOM) {
+      document.getElementById("fallback").style.display = "block";
+    }
+  }, true);
+</script>
+<script type="text/babel" data-presets="react">
+// React hooks come from the global UMD build loaded via <script> tag (no bundler, no ESM).
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* Inline lucide-equivalent icons (no external icon package needed) */
+const Monitor = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="20" height="14" x="2" y="3" rx="2" /> <line x1="8" x2="16" y1="21" y2="21" /> <line x1="12" x2="12" y1="17" y2="21" /></svg>
+);
+const Plus = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14" /> <path d="M12 5v14" /></svg>
+);
+const Trash2 = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+);
+const Copy = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+);
+const Download = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></svg>
+);
+const Check = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 6 9 17l-5-5" /></svg>
+);
+const Save = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /> <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /> <path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg>
+);
+const GitCompare = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="18" cy="18" r="3" /> <circle cx="6" cy="6" r="3" /> <path d="M13 6h3a2 2 0 0 1 2 2v7" /> <path d="M11 18H8a2 2 0 0 1-2-2V9" /></svg>
+);
+const Layers = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /> <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /> <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" /></svg>
+);
+const FileDown = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M12 18v-6" /> <path d="m9 15 3 3 3-3" /></svg>
+);
+const Upload = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 3v12" /> <path d="m17 8-5-5-5 5" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /></svg>
+);
+const RotateCcw = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></svg>
+);
+const Loader2 = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+);
+const Printer = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /> <path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6" /> <rect x="6" y="14" width="12" height="8" rx="1" /></svg>
+);
+const GitBranch = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M15 6a9 9 0 0 0-9 9V3" /> <circle cx="18" cy="6" r="3" /> <circle cx="6" cy="18" r="3" /></svg>
+);
+const AlertTriangle = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" /></svg>
+);
+const X = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></svg>
+);
+const ClipboardList = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /> <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /> <path d="M12 11h4" /> <path d="M12 16h4" /> <path d="M8 11h.01" /> <path d="M8 16h.01" /></svg>
+);
+const ListChecks = ({ className }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M13 5h8" /> <path d="M13 12h8" /> <path d="M13 19h8" /> <path d="m3 17 2 2 4-4" /> <path d="m3 7 2 2 4-4" /></svg>
+);
+
+/* ------------------------------------------------------------------ */
+/*  Reference data                                                     */
+/* ------------------------------------------------------------------ */
+
+const SCHEMA_VERSION = 1; // release schema — no legacy support
+
+const MODALITIES = [
+  { code: "CT", name: "CT" },
+  { code: "MR", name: "MRI" },
+  { code: "XR", name: "Radiography (XR)" },
+  { code: "US", name: "Ultrasound (US)" },
+  { code: "NM", name: "Nuclear Medicine (NM)" },
+  { code: "PT", name: "PET (PT)" },
+];
+
+const DEFAULT_DIVISIONS = ["General", "Thoracic", "Emergency", "Neuroradiology", "Body", "Musculoskeletal", "Cardiac", "Pediatrics", "Breast", "Nuclear Medicine"];
+
+// Base suggestions per modality.
+const SUGGESTIONS = {
+  CT: ["Axial – soft tissue", "Axial – lung", "Axial – bone", "Coronal reformat", "Sagittal reformat", "MIP"],
+  MR: ["T1", "T2", "FLAIR", "DWI", "ADC", "T1 post-contrast", "STIR"],
+  XR: ["PA", "AP", "Lateral", "Oblique"],
+  US: ["Greyscale", "Color Doppler", "Spectral Doppler"],
+  NM: ["Anterior", "Posterior", "SPECT"],
+  PT: ["PET", "Fused PET/CT", "Attenuation-corrected"],
+};
+
+// Division-aware overrides: SUGGESTIONS_BY_DIVISION[modality][division].
+const SUGGESTIONS_BY_DIVISION = {
+  MR: {
+    Neuroradiology: ["T1", "T2", "FLAIR", "DWI", "ADC", "SWI", "T1 post-contrast"],
+    Breast: ["T2 fat-sat", "Pre-contrast T1", "Dynamic post-contrast", "Subtraction", "MIP", "ADC"],
+    Body: ["T2 axial", "T2 sagittal", "T2 coronal", "DWI high b-value", "ADC", "DCE"],
+    Cardiac: ["Cine SAX", "Cine 4-chamber", "Cine 2-chamber", "LGE", "Perfusion", "T1/T2 mapping"],
+    Musculoskeletal: ["T1", "PD fat-sat", "T2 fat-sat", "STIR", "T1 post-contrast FS", "Coronal PD FS"],
+  },
+  CT: {
+    Neuroradiology: ["Axial – brain", "Axial – bone", "Axial – stroke window", "Coronal reformat", "Sagittal reformat", "CTA MIP"],
+    Emergency: ["Axial – soft tissue", "Axial – lung", "Axial – bone", "Coronal reformat", "Sagittal reformat", "CTA MIP"],
+  },
+};
+
+const suggestionsFor = (modality, division) =>
+  SUGGESTIONS_BY_DIVISION[modality]?.[division] || SUGGESTIONS[modality] || [];
+
+// Leading-token aliases used to guess modality when bulk-parsing pasted protocol names.
+const MODALITY_ALIASES = {
+  CT: "CT", CAT: "CT",
+  MR: "MR", MRI: "MR",
+  XR: "XR", CR: "XR", DX: "XR", RAD: "XR",
+  US: "US", SONO: "US",
+  NM: "NM",
+  PT: "PT", PET: "PT",
+};
+function detectModality(line) {
+  const token = (line.trim().split(/\s+/)[0] || "").replace(/[^A-Za-z]/g, "").toUpperCase();
+  return MODALITY_ALIASES[token] || null;
+}
+
+// Parse a bulk paste into deduped, trimmed protocol name candidates.
+function parseBulkText(text) {
+  const hasNewlines = /\r?\n/.test(text.trim());
+  const rawLines = hasNewlines ? text.split(/\r?\n/) : text.split(",");
+  const seen = new Set();
+  const out = [];
+  for (const raw of rawLines) {
+    const name = raw.trim().replace(/\s+/g, " ");
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
+// Convention: "A x B" = A rows x B columns.
+const LAYOUTS = {
+  "1x1": { rows: 1, cols: 1 },
+  "2x1": { rows: 2, cols: 1 },
+  "1x2": { rows: 1, cols: 2 },
+  "2x2": { rows: 2, cols: 2 },
+  "2x3": { rows: 2, cols: 3 },
+  "3x2": { rows: 3, cols: 2 },
+  "3x3": { rows: 3, cols: 3 },
+};
+Object.values(LAYOUTS).forEach((l) => { l.n = l.rows * l.cols; });
+const LAYOUT_KEYS = Object.keys(LAYOUTS);
+
+const MAX_PRIOR_RANK = 3;
+const DERIVED_RE = /reformat|mpr|\bmip\b|fused|recon|derived|3d|volume|subtraction|\bsub\b|\badc\b/i;
+
+const ordinal = (n) => (n === 1 ? "most recent" : n === 2 ? "2nd most recent" : n === 3 ? "3rd most recent" : `${n}th most recent`);
+
+const uid = () =>
+  (typeof crypto !== "undefined" && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `p-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+const emptyTile = (source = "current") => ({ source, priorRank: source === "prior" ? 1 : undefined, label: "", derivedManual: null });
+
+const isDerived = (tile) => tile.derivedManual != null ? tile.derivedManual : DERIVED_RE.test(tile.label || "");
+
+const emptyProtocol = () => ({
+  id: null,
+  name: "",
+  modality: "CT",
+  division: "General",
+  studyDescription: "",
+  hasComparison: false,
+  screens: {
+    1: { layout: "1x1", tiles: [emptyTile()] },
+    2: { layout: "1x1", tiles: [emptyTile()] },
+  },
+  notes: "",
+});
+
+const SEED = [
+  {
+    id: "seed-cxr",
+    name: "Chest radiograph, 2-view (with prior)",
+    modality: "XR",
+    division: "Thoracic",
+    studyDescription: "XR CHEST PA AND LATERAL",
+    hasComparison: true,
+    screens: {
+      1: { layout: "1x2", tiles: [{ source: "current", label: "PA", derivedManual: null }, { source: "current", label: "Lateral", derivedManual: null }] },
+      2: { layout: "1x2", tiles: [{ source: "prior", priorRank: 1, label: "PA", derivedManual: null }, { source: "prior", priorRank: 1, label: "Lateral", derivedManual: null }] },
+    },
+    notes: "Auto-pull single most-recent same-modality prior. Match on view position.",
+  },
+  {
+    id: "seed-ctchest",
+    name: "CT chest with contrast (no prior)",
+    modality: "CT",
+    division: "Thoracic",
+    studyDescription: "CT CHEST W CONTRAST",
+    hasComparison: false,
+    screens: {
+      1: { layout: "1x2", tiles: [{ source: "current", label: "Axial – soft tissue", derivedManual: null }, { source: "current", label: "Axial – lung", derivedManual: null }] },
+      2: { layout: "2x1", tiles: [{ source: "current", label: "Coronal reformat", derivedManual: null }, { source: "current", label: "Sagittal reformat", derivedManual: null }] },
+    },
+    notes: "Same study spread across viewports/windows. Sync scrolling on the two axial panes.",
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Persistence                                                        */
+/* ------------------------------------------------------------------ */
+
+const LIB_KEY = "hpd:release:v1";
+
+async function loadRaw() {
+  try {
+    const raw = localStorage.getItem(LIB_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
+async function persistRaw(envelope) {
+  try {
+    localStorage.setItem(LIB_KEY, JSON.stringify(envelope));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Normalize any imported/loaded protocol to the release schema. Strips
+// derived fields like `summary` (recomputed on display/export).
+function normalizeProtocol(x, i = 0) {
+  const scr = (s) => ({
+    layout: LAYOUTS[s?.layout] ? s.layout : "1x1",
+    tiles: (s?.tiles || [emptyTile()]).map((t) => ({
+      source: t.source === "prior" ? "prior" : "current",
+      priorRank: t.source === "prior" ? Math.min(t.priorRank || 1, MAX_PRIOR_RANK) : undefined,
+      label: t.label || "",
+      derivedManual: t.derivedManual ?? null,
+    })),
+  });
+  const { summary, ...rest } = x;
+  return {
+    ...emptyProtocol(),
+    ...rest,
+    id: x.id || uid() + `-${i}`,
+    division: x.division || "General",
+    screens: { 1: scr(x.screens?.[1]), 2: scr(x.screens?.[2]) },
+  };
+}
+
+function parseLibraryPayload(raw) {
+  const list = Array.isArray(raw) ? raw : raw?.protocols;
+  if (!Array.isArray(list)) return null;
+  return {
+    protocols: list.map(normalizeProtocol),
+    divisions: (!Array.isArray(raw) && Array.isArray(raw?.divisions)) ? raw.divisions : DEFAULT_DIVISIONS,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Summary + completeness + comparison helpers                        */
+/* ------------------------------------------------------------------ */
+
+const tileText = (t) => {
+  let s = t.label?.trim() || "—";
+  if (t.source === "prior") s += ` (P${t.priorRank || 1})`;
+  return s;
+};
+
+function screenSummary(scr) {
+  const tiles = scr.tiles;
+  const allCurrent = tiles.every((t) => t.source === "current");
+  const allSamePrior = tiles.every((t) => t.source === "prior" && (t.priorRank || 1) === (tiles[0].priorRank || 1));
+  if (allCurrent) return tiles.map((t) => t.label?.trim() || "—").join(" | ") + " (current)";
+  if (allSamePrior) return tiles.map((t) => t.label?.trim() || "—").join(" | ") + ` (prior, ${ordinal(tiles[0].priorRank || 1)})`;
+  return tiles.map(tileText).join(" | ");
+}
+
+const summarize = (p) =>
+  `${p.modality} · ${p.division || "General"} · Screen 1 [${p.screens[1].layout}]: ${screenSummary(p.screens[1])} → Screen 2 [${p.screens[2].layout}]: ${screenSummary(p.screens[2])}`;
+
+const allTiles = (proto) => [1, 2].flatMap((s) => proto.screens[s].tiles);
+
+// Three-tier status:
+//  - "queued":   nothing has been filled in yet (fresh stub, e.g. from bulk add)
+//  - "progress": some but not all viewport labels are filled, or name is missing
+//  - "complete": named, and every viewport across both screens has a label
+function protocolStatus(proto) {
+  const tiles = allTiles(proto);
+  const allEmpty = tiles.every((t) => !t.label?.trim());
+  const allFilled = tiles.every((t) => t.label?.trim());
+  if (proto.name?.trim() && allFilled) return "complete";
+  if (allEmpty) return "queued";
+  return "progress";
+}
+const isComplete = (proto) => protocolStatus(proto) === "complete";
+
+const STATUS_META = {
+  queued: { label: "queued", cls: "bg-sky-400/15 text-sky-300" },
+  progress: { label: "in progress", cls: "bg-slate-700/60 text-slate-400" },
+  complete: { label: "complete", cls: "bg-emerald-400/15 text-emerald-300" },
+};
+
+// Content signature used to skip version bumps on no-op saves and to detect
+// unsaved changes. Excludes id/version/updatedAt.
+const contentSig = (proto) => {
+  const { id, version, updatedAt, ...rest } = proto;
+  return JSON.stringify(rest);
+};
+
+/* ------------------------------------------------------------------ */
+/*  Small UI pieces                                                    */
+/* ------------------------------------------------------------------ */
+
+function LayoutIcon({ layoutKey, active }) {
+  const { cols, rows, n } = LAYOUTS[layoutKey];
+  const border = active ? "border-cyan-400" : "border-slate-600";
+  return (
+    <div
+      className={`grid gap-px rounded-sm border ${border} p-0.5 h-6 w-8`}
+      style={{ gridTemplateColumns: `repeat(${cols},1fr)`, gridTemplateRows: `repeat(${rows},1fr)` }}
+    >
+      {Array.from({ length: n }).map((_, i) => (
+        <div key={i} className={active ? "bg-cyan-400/70 rounded-[1px]" : "bg-slate-600 rounded-[1px]"} />
+      ))}
+    </div>
+  );
+}
+
+function LayoutPicker({ value, onChange }) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {LAYOUT_KEYS.map((k) => (
+        <button
+          key={k}
+          onClick={() => onChange(k)}
+          className={`flex flex-col items-center gap-0.5 rounded-md px-1.5 py-1 text-[9px] font-medium transition
+            ${value === k ? "bg-cyan-500/15 text-cyan-300 ring-1 ring-cyan-400/60" : "text-slate-400 hover:bg-slate-700/50"}`}
+          title={`${k} — ${LAYOUTS[k].rows} row(s) × ${LAYOUTS[k].cols} column(s)`}
+        >
+          <LayoutIcon layoutKey={k} active={value === k} />
+          {k}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Tile({ tile, comparison, suggestions, compact, onChange }) {
+  const [focused, setFocused] = useState(false);
+  const isPrior = tile.source === "prior";
+  const derived = isDerived(tile);
+  const accent = comparison
+    ? isPrior
+      ? "ring-amber-400/50 bg-amber-400/5"
+      : "ring-cyan-400/50 bg-cyan-400/5"
+    : "ring-slate-600/60 bg-slate-800/40";
+
+  const cycleSource = () => {
+    if (!isPrior) return onChange({ ...tile, source: "prior", priorRank: 1 });
+    const r = tile.priorRank || 1;
+    if (r >= MAX_PRIOR_RANK) return onChange({ ...tile, source: "current", priorRank: undefined });
+    onChange({ ...tile, priorRank: r + 1 });
+  };
+
+  const showChips = !compact || focused;
+
+  return (
+    <div className={`flex flex-col gap-1 rounded-md ring-1 ${accent} ${compact ? "p-1.5" : "p-2"}`}>
+      <div className="flex items-center gap-1 flex-wrap">
+        {comparison && (
+          <button
+            onClick={cycleSource}
+            title={isPrior ? `Prior study — ${ordinal(tile.priorRank || 1)}. Click to cycle.` : "Current study. Click to cycle to priors."}
+            className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide
+              ${isPrior ? "bg-amber-400/20 text-amber-300" : "bg-cyan-400/20 text-cyan-300"}`}
+          >
+            {isPrior ? `Prior ${tile.priorRank || 1}` : "Current"}
+          </button>
+        )}
+        <button
+          onClick={() => onChange({ ...tile, derivedManual: !derived })}
+          title={derived ? "Derived series (reformat/recon/subtraction). Click to unmark." : "Mark as derived series"}
+          className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide
+            ${derived ? "bg-slate-200/15 text-slate-200 ring-1 ring-slate-400/50" : "text-slate-600 hover:text-slate-400"}`}
+        >
+          <GitBranch className="h-2.5 w-2.5" /> {derived ? "Derived" : "src"}
+        </button>
+      </div>
+      <input
+        value={tile.label}
+        onChange={(e) => onChange({ ...tile, label: e.target.value })}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 150)}
+        placeholder={compact ? "View…" : "View / series / window…"}
+        className="w-full bg-transparent text-xs text-slate-100 placeholder-slate-500 outline-none border-b border-slate-600/50 focus:border-cyan-400/60 pb-0.5"
+      />
+      {showChips && (
+        <div className="flex flex-wrap gap-1">
+          {suggestions.slice(0, compact ? 6 : 4).map((s) => (
+            <button
+              key={s}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onChange({ ...tile, label: s })}
+              className="rounded bg-slate-700/60 px-1.5 py-0.5 text-[9px] text-slate-300 hover:bg-slate-600"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScreenPanel({ screenNum, screen, comparison, suggestions, onLayout, onTile }) {
+  const { cols, rows, n } = LAYOUTS[screen.layout];
+  const compact = n >= 6;
+  const role = comparison ? (screenNum === 1 ? "current study" : "comparison") : null;
+  return (
+    <div className="flex-1 rounded-xl border border-slate-700 bg-slate-900/60 p-3 min-w-0">
+      <div className="mb-2 flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+          <Monitor className="h-3.5 w-3.5" />
+          Screen {screenNum}
+          {role && <span className="font-normal text-[10px] text-slate-500">· {role} by convention</span>}
+        </div>
+        <LayoutPicker value={screen.layout} onChange={onLayout} />
+      </div>
+      <div
+        className="grid gap-1.5 rounded-lg bg-slate-950/70 p-2"
+        style={{ gridTemplateColumns: `repeat(${cols},1fr)`, gridTemplateRows: `repeat(${rows},minmax(${compact ? 64 : 84}px,1fr))` }}
+      >
+        {screen.tiles.map((t, i) => (
+          <Tile key={i} tile={t} comparison={comparison} suggestions={suggestions} compact={compact} onChange={(nt) => onTile(i, nt)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SaveIndicator({ state }) {
+  if (state === "saving") return <span className="inline-flex items-center gap-1 text-[11px] text-slate-400"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span>;
+  if (state === "saved") return <span className="inline-flex items-center gap-1 text-[11px] text-cyan-400"><Check className="h-3.5 w-3.5" /> Saved</span>;
+  if (state === "error") return <span className="text-[11px] text-amber-400">Couldn't save — changes stay for this session</span>;
+  return null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Print sheet                                                        */
+/* ------------------------------------------------------------------ */
+
+function PrintCell({ tile, comparison }) {
+  const derived = isDerived(tile);
+  return (
+    <div className="relative flex items-center justify-center border border-black p-2 text-center text-[13px] leading-snug" style={{ minHeight: "80px" }}>
+      <div>
+        <div className="font-medium">{tile.label?.trim() || "\u00A0"}</div>
+        <div className="mt-1 flex items-center justify-center gap-1 text-[9px] uppercase tracking-wide">
+          {comparison && (
+            <span className={`border px-1 ${tile.source === "prior" ? "border-black bg-black text-white" : "border-black"}`}>
+              {tile.source === "prior" ? `Prior ${tile.priorRank || 1} (${ordinal(tile.priorRank || 1)})` : "Current"}
+            </span>
+          )}
+          {derived && <span className="border border-black px-1">⎇ Derived</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PrintSheet({ proto, isLast }) {
+  return (
+    <div className="print-sheet bg-white text-black p-6" style={isLast ? {} : { pageBreakAfter: "always" }}>
+      <div className="flex items-start justify-between border-b-2 border-black pb-2">
+        <div>
+          <div className="text-lg font-bold">{proto.name || "Untitled protocol"}</div>
+          <div className="text-xs">{proto.modality} · {proto.division || "General"}{proto.studyDescription ? ` · matches "${proto.studyDescription}"` : ""}</div>
+        </div>
+        <div className="text-right text-[10px]">
+          <div className="flex gap-3 justify-end font-semibold">
+            <span>[{!proto.hasComparison ? "X" : "\u00A0\u00A0"}] SAME STUDY</span>
+            <span>[{proto.hasComparison ? "X" : "\u00A0\u00A0"}] COMPARISON</span>
+          </div>
+          <div className="mt-1">{proto.version ? `v${proto.version}` : ""}{proto.updatedAt ? ` · ${new Date(proto.updatedAt).toLocaleDateString()}` : ""}</div>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-4">
+        {[1, 2].map((s) => {
+          const scr = proto.screens[s];
+          const { rows, cols } = LAYOUTS[scr.layout];
+          return (
+            <div key={s}>
+              <div className="bg-black px-2 py-1 text-center text-xs font-bold uppercase tracking-wider text-white">
+                Screen {s} · {scr.layout} ({rows} row{rows > 1 ? "s" : ""} × {cols} col{cols > 1 ? "s" : ""})
+                {proto.hasComparison ? (s === 1 ? " · current" : " · comparison") : ""}
+              </div>
+              <div className="grid border border-black" style={{ gridTemplateColumns: `repeat(${cols},1fr)`, gridTemplateRows: `repeat(${rows},1fr)` }}>
+                {scr.tiles.map((t, i) => <PrintCell key={i} tile={t} comparison={proto.hasComparison} />)}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 text-[11px]"><span className="font-bold uppercase">Summary:</span> {summarize(proto)}</div>
+      <div className="mt-2 border border-black p-2 text-[11px]" style={{ minHeight: "50px" }}>
+        <span className="font-bold uppercase">Notes:</span> {proto.notes || ""}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  App                                                                */
+/* ------------------------------------------------------------------ */
+
+function HangingProtocolDesigner() {
+  const [library, setLibrary] = useState([]);
+  const [divisions, setDivisions] = useState(DEFAULT_DIVISIONS);
+  const [loaded, setLoaded] = useState(false);
+  const [saveState, setSaveState] = useState("idle");
+
+  const [p, setP] = useState(emptyProtocol());
+  const [savedSig, setSavedSig] = useState(contentSig(emptyProtocol()));
+  const [showJSON, setShowJSON] = useState(false);
+  const [copyState, setCopyState] = useState("idle"); // idle | copied | failed
+
+  const [filter, setFilter] = useState("all");
+  const [divFilter, setDivFilter] = useState("all");
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importError, setImportError] = useState("");
+
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [bulkDivision, setBulkDivision] = useState("General");
+  const [bulkModality, setBulkModality] = useState("CT");
+  const [bulkRows, setBulkRows] = useState(null); // null = not yet previewed; [] = previewed, empty
+
+  const [addingDivision, setAddingDivision] = useState(false);
+  const [newDivision, setNewDivision] = useState("");
+
+  const [printQueue, setPrintQueue] = useState(null);
+  const [pendingNav, setPendingNav] = useState(null); // { label, run } — dirty-state guard
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  // Snapshot of tile sources taken when comparison is toggled OFF, so
+  // customized Prior assignments survive an off/on round-trip.
+  const compSnapshot = useRef(null);
+
+  const dirty = contentSig(p) !== savedSig;
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const parsed = parseLibraryPayload(await loadRaw());
+      if (!alive) return;
+      setLibrary(parsed?.protocols ?? SEED.map(normalizeProtocol));
+      setDivisions(parsed?.divisions ?? DEFAULT_DIVISIONS);
+      setLoaded(true);
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    let cancelled = false;
+    setSaveState("saving");
+    persistRaw({ schemaVersion: SCHEMA_VERSION, protocols: library, divisions }).then((ok) => {
+      if (cancelled) return;
+      setSaveState(ok ? "saved" : "error");
+      if (ok) setTimeout(() => setSaveState((s) => (s === "saved" ? "idle" : s)), 1400);
+    });
+    return () => { cancelled = true; };
+  }, [library, divisions, loaded]);
+
+  const update = (patch) => setP((prev) => ({ ...prev, ...patch }));
+
+  const setLayout = (screenNum, layoutKey) => {
+    setP((prev) => {
+      const n = LAYOUTS[layoutKey].n;
+      const old = prev.screens[screenNum].tiles;
+      const defSource = prev.hasComparison && screenNum === 2 ? "prior" : "current";
+      const tiles = Array.from({ length: n }).map((_, i) => old[i] || emptyTile(defSource));
+      return { ...prev, screens: { ...prev.screens, [screenNum]: { layout: layoutKey, tiles } } };
+    });
+  };
+
+  const setTile = (screenNum, idx, tile) => {
+    setP((prev) => {
+      const tiles = prev.screens[screenNum].tiles.map((t, i) => (i === idx ? tile : t));
+      return { ...prev, screens: { ...prev.screens, [screenNum]: { ...prev.screens[screenNum], tiles } } };
+    });
+  };
+
+  const toggleComparison = (val) => {
+    setP((prev) => {
+      if (prev.hasComparison === val) return prev;
+      if (!val) {
+        // Remember sources so toggling back on restores them.
+        compSnapshot.current = {
+          1: prev.screens[1].tiles.map((t) => ({ source: t.source, priorRank: t.priorRank })),
+          2: prev.screens[2].tiles.map((t) => ({ source: t.source, priorRank: t.priorRank })),
+        };
+        const fix = (scr) => ({ ...scr, tiles: scr.tiles.map((t) => ({ ...t, source: "current", priorRank: undefined })) });
+        return { ...prev, hasComparison: false, screens: { 1: fix(prev.screens[1]), 2: fix(prev.screens[2]) } };
+      }
+      // Toggling ON: restore snapshot if tile counts still match; else defaults.
+      const restore = (num, defSource) => {
+        const tiles = prev.screens[num].tiles;
+        const snap = compSnapshot.current?.[num];
+        if (snap && snap.length === tiles.length) {
+          return { ...prev.screens[num], tiles: tiles.map((t, i) => ({ ...t, source: snap[i].source, priorRank: snap[i].priorRank })) };
+        }
+        return {
+          ...prev.screens[num],
+          tiles: tiles.map((t) => ({ ...t, source: defSource, priorRank: defSource === "prior" ? 1 : undefined })),
+        };
+      };
+      return { ...prev, hasComparison: true, screens: { 1: restore(1, "current"), 2: restore(2, "prior") } };
+    });
+  };
+
+  const conventionWarning = p.hasComparison && p.screens[1].tiles.some((t) => t.source === "prior");
+  const duplicateNameWarning = library.some(
+    (x) => x.id !== p.id && x.name.trim().toLowerCase() === p.name.trim().toLowerCase() && (x.division || "General") === (p.division || "General")
+  ) && !!p.name.trim();
+
+  const save = () => {
+    if (!p.name.trim()) return;
+    const id = p.id || uid();
+    const existing = library.find((x) => x.id === id);
+    // Skip the version bump if nothing changed.
+    if (existing && contentSig(existing) === contentSig(p)) {
+      setSavedSig(contentSig(p));
+      setSaveState("saved");
+      setTimeout(() => setSaveState((s) => (s === "saved" ? "idle" : s)), 1400);
+      return;
+    }
+    const withId = { ...p, id, version: (p.version || 0) + 1, updatedAt: new Date().toISOString() };
+    setP(withId);
+    setSavedSig(contentSig(withId));
+    setLibrary((lib) => (lib.some((x) => x.id === id) ? lib.map((x) => (x.id === id ? withId : x)) : [...lib, withId]));
+  };
+
+  // Dirty-state guard: run now, or park behind an inline confirm.
+  const guard = (label, run) => {
+    if (!dirty) return run();
+    setPendingNav({ label, run });
+  };
+
+  const doLoad = (proto) => {
+    const copy = JSON.parse(JSON.stringify(proto));
+    setP(copy);
+    setSavedSig(contentSig(copy));
+    compSnapshot.current = null;
+    setShowJSON(false);
+  };
+  const doNew = () => {
+    const fresh = emptyProtocol();
+    setP(fresh);
+    setSavedSig(contentSig(fresh));
+    compSnapshot.current = null;
+    setShowJSON(false);
+  };
+  const doDuplicate = (proto) => {
+    const copy = JSON.parse(JSON.stringify(proto));
+    copy.id = null; copy.name = `${proto.name} (copy)`; copy.version = 0; copy.updatedAt = undefined;
+    setP(copy);
+    setSavedSig("__duplicate__"); // a duplicate always counts as unsaved work
+    compSnapshot.current = null;
+    setShowJSON(false);
+  };
+
+  const removeProtocol = (id) => { setLibrary((lib) => lib.filter((x) => x.id !== id)); if (p.id === id) doNew(); };
+  const resetLibrary = () => { setLibrary(SEED.map(normalizeProtocol)); setConfirmReset(false); };
+
+  const openBulkAdd = () => {
+    setBulkDivision(divFilter !== "all" ? divFilter : (divisions[0] || "General"));
+    setBulkModality("CT");
+    setBulkText("");
+    setBulkRows(null);
+    setShowBulkAdd(true);
+  };
+
+  const previewBulk = () => {
+    const names = parseBulkText(bulkText);
+    const rows = names.map((name, i) => {
+      const existsAlready = library.some(
+        (x) => x.name.trim().toLowerCase() === name.toLowerCase() && (x.division || "General") === bulkDivision
+      );
+      return {
+        rowId: `bulk-${i}`,
+        name,
+        modality: detectModality(name) || bulkModality,
+        flagged: existsAlready,
+        excluded: false,
+      };
+    });
+    setBulkRows(rows);
+  };
+
+  const setBulkRowModality = (rowId, modality) =>
+    setBulkRows((rows) => rows.map((r) => (r.rowId === rowId ? { ...r, modality } : r)));
+  const toggleExcludeBulkRow = (rowId) =>
+    setBulkRows((rows) => rows.map((r) => (r.rowId === rowId ? { ...r, excluded: !r.excluded } : r)));
+
+  const commitBulk = () => {
+    const included = (bulkRows || []).filter((r) => !r.excluded);
+    if (!included.length) return;
+    const stubs = included.map((r) => ({
+      ...emptyProtocol(),
+      id: uid(),
+      name: r.name,
+      studyDescription: r.name,
+      modality: r.modality,
+      division: bulkDivision,
+    }));
+    setLibrary((lib) => [...lib, ...stubs]);
+    setShowBulkAdd(false);
+    setBulkText("");
+    setBulkRows(null);
+    setDivFilter(bulkDivision);
+    setFilter("queued");
+  };
+
+  const handleDivisionSelect = (v) => {
+    if (v === "__add__") { setAddingDivision(true); setNewDivision(""); return; }
+    update({ division: v });
+  };
+  const commitNewDivision = () => {
+    const d = newDivision.trim();
+    if (!d) return;
+    if (!divisions.includes(d)) setDivisions((ds) => [...ds, d]);
+    update({ division: d });
+    setAddingDivision(false); setNewDivision("");
+  };
+
+  const json = useMemo(() => JSON.stringify({ ...p, summary: summarize(p) }, null, 2), [p]);
+
+  const copyJSON = async () => {
+    try {
+      await navigator.clipboard.writeText(json);
+      setCopyState("copied");
+    } catch (e) {
+      setCopyState("failed");
+    }
+    setTimeout(() => setCopyState("idle"), 2500);
+  };
+  const downloadJSON = () => {
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${(p.name || "protocol").replace(/\s+/g, "_")}.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportLibrary = () => {
+    const payload = {
+      schemaVersion: SCHEMA_VERSION,
+      layoutConvention: "rows x columns",
+      screenConvention: "screen 1 = current study, screen 2 = comparison (default)",
+      exportedAt: new Date().toISOString(),
+      divisions,
+      protocols: library.map((x) => ({ ...x, summary: summarize(x) })),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "hanging_protocols.json"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importLibrary = (mode) => {
+    try {
+      const parsed = parseLibraryPayload(JSON.parse(importText));
+      if (!parsed) throw new Error("Expected a protocol array, or an export with a 'protocols' field.");
+      if (mode === "replace") {
+        setLibrary(parsed.protocols);
+      } else {
+        setLibrary((lib) => {
+          const ids = new Set(parsed.protocols.map((x) => x.id));
+          return [...lib.filter((x) => !ids.has(x.id)), ...parsed.protocols];
+        });
+      }
+      setDivisions((ds) => Array.from(new Set([...ds, ...parsed.divisions])));
+      setShowImport(false); setImportText(""); setImportError("");
+    } catch (e) {
+      setImportError(e.message || "Invalid JSON.");
+    }
+  };
+
+  const visible = library.filter(
+    (x) =>
+      (filter === "all" || protocolStatus(x) === filter) &&
+      (divFilter === "all" || (x.division || "General") === divFilter)
+  );
+
+  const suggestions = suggestionsFor(p.modality, p.division);
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
+      <style>{`
+        @media print {
+          .app-ui { display: none !important; }
+          .print-area { display: block !important; position: static !important; background: white !important; padding: 0 !important; }
+          .print-area .no-print { display: none !important; }
+          body { background: white !important; }
+        }
+        @media screen {
+          .print-area { display: block; position: fixed; inset: 0; z-index: 50; overflow: auto; background: rgba(2,6,23,0.92); padding: 2rem 1rem; }
+          .print-area .print-sheet { max-width: 900px; margin: 0 auto 1.5rem; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        }
+        @page { size: landscape; margin: 12mm; }
+      `}</style>
+
+      {/* Print preview — opens quietly; printing only on explicit click */}
+      {printQueue && (
+        <div className="print-area">
+          <div className="no-print mx-auto mb-3 flex max-w-[900px] items-center justify-between gap-2">
+            <span className="text-xs text-slate-400">{printQueue.length} sheet{printQueue.length > 1 ? "s" : ""} · landscape</span>
+            <div className="flex gap-2">
+              <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-md bg-cyan-500 px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-cyan-400">
+                <Printer className="h-4 w-4" /> Print
+              </button>
+              <button onClick={() => setPrintQueue(null)} className="inline-flex items-center gap-1.5 rounded-md border border-slate-600 bg-slate-900 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800">
+                <X className="h-4 w-4" /> Close
+              </button>
+            </div>
+          </div>
+          {printQueue.map((proto, i) => <PrintSheet key={proto.id || i} proto={proto} isLast={i === printQueue.length - 1} />)}
+        </div>
+      )}
+
+      <div className="app-ui mx-auto max-w-6xl px-4 py-6">
+        <header className="mb-5 border-b border-slate-800 pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-cyan-400">
+              <Layers className="h-5 w-5" />
+              <h1 className="text-lg font-semibold tracking-tight text-slate-100">Hanging Protocol Designer</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              {dirty && <span className="text-[11px] text-amber-300/80">Unsaved changes</span>}
+              <SaveIndicator state={saveState} />
+            </div>
+          </div>
+          <p className="mt-1 text-sm text-slate-400">
+            Layouts are rows × columns. Screen 1 holds the current study; screen 2 the comparison, by convention.
+          </p>
+        </header>
+
+        {/* Dirty-navigation confirm */}
+        {pendingNav && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2 text-sm text-amber-200">
+            <span className="inline-flex items-center gap-1.5"><AlertTriangle className="h-4 w-4 shrink-0" /> Unsaved changes will be lost — {pendingNav.label}?</span>
+            <div className="flex gap-2">
+              <button onClick={() => { pendingNav.run(); setPendingNav(null); }} className="rounded bg-amber-400/20 px-2.5 py-1 text-xs font-medium hover:bg-amber-400/30">Discard changes</button>
+              <button onClick={() => setPendingNav(null)} className="rounded border border-amber-400/40 px-2.5 py-1 text-xs hover:bg-amber-400/10">Keep editing</button>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_280px]">
+          <div className="space-y-4">
+            <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Protocol identity</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="text-xs text-slate-400">
+                  Protocol name
+                  <input value={p.name} onChange={(e) => update({ name: e.target.value })} placeholder="e.g. CT chest with contrast"
+                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-400/60" />
+                  {duplicateNameWarning && (
+                    <span className="mt-1 block text-[10px] text-amber-300/90">A protocol with this name already exists in {p.division || "General"}.</span>
+                  )}
+                </label>
+                <label className="text-xs text-slate-400">
+                  Modality
+                  <select value={p.modality} onChange={(e) => update({ modality: e.target.value })}
+                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-400/60">
+                    {MODALITIES.map((m) => <option key={m.code} value={m.code}>{m.name}</option>)}
+                  </select>
+                </label>
+                <label className="text-xs text-slate-400">
+                  Division
+                  {!addingDivision ? (
+                    <select value={p.division} onChange={(e) => handleDivisionSelect(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-400/60">
+                      {divisions.map((d) => <option key={d} value={d}>{d}</option>)}
+                      <option value="__add__">+ Add new division…</option>
+                    </select>
+                  ) : (
+                    <div className="mt-1 flex gap-1.5">
+                      <input autoFocus value={newDivision} onChange={(e) => setNewDivision(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && commitNewDivision()}
+                        placeholder="Division name"
+                        className="w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-400/60" />
+                      <button onClick={commitNewDivision} className="rounded-md bg-cyan-500 px-2.5 text-xs font-medium text-slate-950 hover:bg-cyan-400">Add</button>
+                      <button onClick={() => setAddingDivision(false)} className="rounded-md border border-slate-700 px-2 text-xs text-slate-400 hover:bg-slate-800">✕</button>
+                    </div>
+                  )}
+                </label>
+                <label className="text-xs text-slate-400">
+                  Match on study description
+                  <input value={p.studyDescription} onChange={(e) => update({ studyDescription: e.target.value })} placeholder="e.g. CT CHEST W CONTRAST"
+                    className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-400/60" />
+                </label>
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <GitCompare className="h-4 w-4 text-slate-400" />
+                  <span className="text-sm font-medium text-slate-200">Comparison with prior study(s)?</span>
+                </div>
+                <div className="inline-flex overflow-hidden rounded-md border border-slate-700">
+                  <button onClick={() => toggleComparison(false)}
+                    className={`px-3 py-1.5 text-xs font-medium ${!p.hasComparison ? "bg-cyan-500/20 text-cyan-300" : "text-slate-400 hover:bg-slate-800"}`}>
+                    Same study only
+                  </button>
+                  <button onClick={() => toggleComparison(true)}
+                    className={`px-3 py-1.5 text-xs font-medium ${p.hasComparison ? "bg-cyan-500/20 text-cyan-300" : "text-slate-400 hover:bg-slate-800"}`}>
+                    Current + prior(s)
+                  </button>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-slate-500">
+                {p.hasComparison
+                  ? "Screen 2 tiles default to the most recent prior. Click a tile's badge to cycle Current → Prior 1 → Prior 2 → Prior 3 for multi-prior layouts."
+                  : "No prior — the single study is spread across both screens by view, plane, and window."}
+              </p>
+              {conventionWarning && (
+                <p className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-amber-400/10 px-2 py-1 text-xs text-amber-300">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  Screen 1 contains prior tiles — that departs from the screen 1 = current convention. Allowed, but confirm it's intentional.
+                </p>
+              )}
+            </section>
+
+            <div className="flex flex-col gap-3 md:flex-row">
+              <ScreenPanel screenNum={1} screen={p.screens[1]} comparison={p.hasComparison} suggestions={suggestions}
+                onLayout={(k) => setLayout(1, k)} onTile={(i, t) => setTile(1, i, t)} />
+              <ScreenPanel screenNum={2} screen={p.screens[2]} comparison={p.hasComparison} suggestions={suggestions}
+                onLayout={(k) => setLayout(2, k)} onTile={(i, t) => setTile(2, i, t)} />
+            </div>
+
+            <p className="rounded-lg border border-slate-800 bg-slate-900/30 px-3 py-2 text-[11px] leading-relaxed text-slate-400">
+              <span className="font-semibold uppercase tracking-wide text-slate-500">Summary · </span>{summarize(p)}
+            </p>
+
+            <section className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</label>
+              <textarea value={p.notes} onChange={(e) => update({ notes: e.target.value })} rows={2}
+                placeholder="Sync scrolling, prior-selection rules, window presets, sorting…"
+                className="mt-2 w-full rounded-md border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-sm text-slate-100 outline-none focus:border-cyan-400/60" />
+            </section>
+
+            <div className="flex flex-wrap gap-2">
+              <button onClick={save} disabled={!p.name.trim()}
+                className="inline-flex items-center gap-1.5 rounded-md bg-cyan-500 px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-cyan-400 disabled:opacity-40">
+                <Save className="h-4 w-4" /> Save to library
+              </button>
+              <button onClick={() => setPrintQueue([p])}
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800">
+                <Printer className="h-4 w-4" /> Print view
+              </button>
+              <button onClick={() => setShowJSON((s) => !s)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800">
+                <FileDown className="h-4 w-4" /> {showJSON ? "Hide" : "View"} JSON
+              </button>
+              <button onClick={() => guard("start a new protocol", doNew)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800">
+                <Plus className="h-4 w-4" /> New
+              </button>
+            </div>
+
+            {showJSON && (
+              <section className="rounded-xl border border-slate-800 bg-slate-950 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">This protocol · JSON</span>
+                  <div className="flex items-center gap-2">
+                    {copyState === "failed" && <span className="text-[10px] text-amber-300">Copy blocked by browser — select the text below manually.</span>}
+                    <button onClick={copyJSON} className="inline-flex items-center gap-1 rounded border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800">
+                      {copyState === "copied" ? <Check className="h-3 w-3 text-cyan-400" /> : <Copy className="h-3 w-3" />} {copyState === "copied" ? "Copied" : "Copy"}
+                    </button>
+                    <button onClick={downloadJSON} className="inline-flex items-center gap-1 rounded border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800">
+                      <Download className="h-3 w-3" /> Download
+                    </button>
+                  </div>
+                </div>
+                <pre className="max-h-64 select-all overflow-auto rounded bg-black/40 p-3 text-[11px] leading-relaxed text-cyan-100">{json}</pre>
+              </section>
+            )}
+          </div>
+
+          {/* Library sidebar */}
+          <aside className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Protocol library</h2>
+              <div className="flex gap-1">
+                <button onClick={openBulkAdd} title="Bulk add from a pasted list" className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"><ClipboardList className="h-3.5 w-3.5" /></button>
+                <button onClick={() => { const done = library.filter(isComplete); if (done.length) setPrintQueue(done); }} title="Print all completed" className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"><Printer className="h-3.5 w-3.5" /></button>
+                <button onClick={exportLibrary} title="Export whole library" className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"><Download className="h-3.5 w-3.5" /></button>
+                <button onClick={() => { setShowImport((s) => !s); setImportError(""); }} title="Import library" className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"><Upload className="h-3.5 w-3.5" /></button>
+                <button onClick={() => setConfirmReset((s) => !s)} title="Reset to examples" className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"><RotateCcw className="h-3.5 w-3.5" /></button>
+              </div>
+            </div>
+
+            {showBulkAdd && (
+              <div className="mb-3 rounded-lg border border-cyan-700/40 bg-slate-950 p-2.5">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-cyan-300">
+                    <ListChecks className="h-3.5 w-3.5" /> Bulk add to queue
+                  </span>
+                  <button onClick={() => setShowBulkAdd(false)} className="text-slate-500 hover:text-slate-300"><X className="h-3.5 w-3.5" /></button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5">
+                  <label className="text-[10px] text-slate-400">
+                    Division (whole batch)
+                    <select value={bulkDivision} onChange={(e) => setBulkDivision(e.target.value)}
+                      className="mt-0.5 w-full rounded border border-slate-700 bg-slate-900 px-1.5 py-1 text-[11px] text-slate-100 outline-none">
+                      {divisions.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-[10px] text-slate-400">
+                    Default modality
+                    <select value={bulkModality} onChange={(e) => setBulkModality(e.target.value)}
+                      className="mt-0.5 w-full rounded border border-slate-700 bg-slate-900 px-1.5 py-1 text-[11px] text-slate-100 outline-none">
+                      {MODALITIES.map((m) => <option key={m.code} value={m.code}>{m.name}</option>)}
+                    </select>
+                  </label>
+                </div>
+
+                <textarea value={bulkText} onChange={(e) => { setBulkText(e.target.value); setBulkRows(null); }} rows={5}
+                  placeholder={"Paste one protocol per line, e.g.\nCT CHEST W CONTRAST\nMR BRAIN WO CONTRAST\nUS RENAL"}
+                  className="mt-2 w-full rounded border border-slate-700 bg-black/40 p-2 text-[11px] text-slate-100 outline-none focus:border-cyan-400/60" />
+
+                {bulkRows === null ? (
+                  <button onClick={previewBulk} disabled={!bulkText.trim()}
+                    className="mt-2 w-full rounded bg-cyan-500 px-2 py-1.5 text-xs font-medium text-slate-950 hover:bg-cyan-400 disabled:opacity-40">
+                    Preview list
+                  </button>
+                ) : (
+                  <>
+                    {bulkRows.length === 0 ? (
+                      <p className="mt-2 text-[11px] text-slate-500">No protocol names found in that paste.</p>
+                    ) : (
+                      <div className="mt-2 max-h-56 space-y-1 overflow-auto">
+                        {bulkRows.map((r) => (
+                          <div key={r.rowId} className={`flex items-center gap-1.5 rounded p-1.5 text-[11px] ${r.excluded ? "opacity-40" : ""} ${r.flagged ? "bg-amber-400/10" : "bg-slate-900"}`}>
+                            <button onClick={() => toggleExcludeBulkRow(r.rowId)} title={r.excluded ? "Re-include" : "Exclude"}
+                              className={`shrink-0 rounded p-0.5 ${r.excluded ? "text-slate-500 hover:text-slate-300" : "text-red-400 hover:text-red-300"}`}>
+                              {r.excluded ? <RotateCcw className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                            </button>
+                            <span className="min-w-0 flex-1 truncate" title={r.name}>{r.name}</span>
+                            {r.flagged && <span className="shrink-0 rounded bg-amber-400/20 px-1 py-0.5 text-[9px] uppercase text-amber-300">exists</span>}
+                            <select value={r.modality} onChange={(e) => setBulkRowModality(r.rowId, e.target.value)}
+                              className="shrink-0 rounded border border-slate-700 bg-slate-950 px-1 py-0.5 text-[10px] text-slate-200 outline-none">
+                              {MODALITIES.map((m) => <option key={m.code} value={m.code}>{m.code}</option>)}
+                            </select>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-2 flex gap-1.5">
+                      <button onClick={commitBulk} disabled={!bulkRows.some((r) => !r.excluded)}
+                        className="flex-1 rounded bg-cyan-500 px-2 py-1.5 text-xs font-medium text-slate-950 hover:bg-cyan-400 disabled:opacity-40">
+                        Add {bulkRows.filter((r) => !r.excluded).length} to library
+                      </button>
+                      <button onClick={previewBulk} className="rounded border border-slate-600 px-2 py-1.5 text-xs text-slate-300 hover:bg-slate-800">
+                        Re-parse
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {confirmReset && (
+              <div className="mb-3 rounded-lg border border-amber-400/40 bg-amber-400/10 p-2 text-[11px] text-amber-200">
+                Replace the whole library with the two built-in examples?
+                <div className="mt-1.5 flex gap-1.5">
+                  <button onClick={resetLibrary} className="flex-1 rounded bg-amber-400/20 px-2 py-1 font-medium hover:bg-amber-400/30">Reset</button>
+                  <button onClick={() => setConfirmReset(false)} className="flex-1 rounded border border-amber-400/40 px-2 py-1 hover:bg-amber-400/10">Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {showImport && (
+              <div className="mb-3 rounded-lg border border-slate-700 bg-slate-950 p-2">
+                <textarea value={importText} onChange={(e) => setImportText(e.target.value)} rows={4}
+                  placeholder="Paste an exported library JSON…"
+                  className="w-full rounded bg-black/40 p-2 text-[11px] text-slate-100 outline-none" />
+                {importError && <p className="mt-1 text-[10px] text-amber-400">{importError}</p>}
+                <div className="mt-2 flex gap-1.5">
+                  <button onClick={() => importLibrary("merge")} className="flex-1 rounded bg-cyan-500 px-2 py-1 text-xs font-medium text-slate-950 hover:bg-cyan-400">Merge in</button>
+                  <button onClick={() => importLibrary("replace")} className="flex-1 rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800">Replace all</button>
+                </div>
+              </div>
+            )}
+
+            <div className="mb-2 flex flex-wrap gap-1 text-[10px]">
+              {[["all", "All"], ["queued", "Queued"], ["progress", "In progress"], ["complete", "Completed"]].map(([k, lbl]) => (
+                <button key={k} onClick={() => setFilter(k)}
+                  className={`rounded px-2 py-1 font-medium ${filter === k ? "bg-cyan-500/20 text-cyan-300" : "text-slate-400 hover:bg-slate-800"}`}>
+                  {lbl}
+                </button>
+              ))}
+            </div>
+            <select value={divFilter} onChange={(e) => setDivFilter(e.target.value)}
+              className="mb-2 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px] text-slate-300 outline-none">
+              <option value="all">All divisions</option>
+              {divisions.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+
+            <div className="space-y-2">
+              {!loaded && <p className="text-xs text-slate-500 inline-flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Loading…</p>}
+              {loaded && visible.length === 0 && <p className="text-xs text-slate-600">Nothing here yet.</p>}
+              {visible.map((proto) => (
+                <div key={proto.id}
+                  className={`group rounded-lg border p-2.5 ${p.id === proto.id ? "border-cyan-500/60 bg-cyan-500/5" : "border-slate-700 bg-slate-900/50"}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <button onClick={() => guard(`open "${proto.name}"`, () => doLoad(proto))} className="min-w-0 text-left">
+                      <div className="text-sm font-medium text-slate-100 leading-tight">{proto.name}</div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-400">
+                        <span className="rounded bg-slate-700 px-1 py-0.5">{proto.modality}</span>
+                        <span className="rounded bg-slate-800 px-1 py-0.5 text-slate-300">{proto.division || "General"}</span>
+                        <span className={proto.hasComparison ? "text-amber-300" : "text-slate-500"}>
+                          {proto.hasComparison ? "current + prior" : "same study"}
+                        </span>
+                        <span className={`rounded px-1 py-0.5 ${STATUS_META[protocolStatus(proto)].cls}`}>
+                          {STATUS_META[protocolStatus(proto)].label}
+                        </span>
+                      </div>
+                      <div className="mt-1 line-clamp-2 text-[9px] leading-snug text-slate-500">{summarize(proto)}</div>
+                      {(proto.version || proto.updatedAt) && (
+                        <div className="mt-0.5 text-[9px] text-slate-600">
+                          {proto.version ? `v${proto.version}` : ""}{proto.version && proto.updatedAt ? " · " : ""}
+                          {proto.updatedAt ? new Date(proto.updatedAt).toLocaleDateString() : ""}
+                        </div>
+                      )}
+                    </button>
+                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100">
+                      <button onClick={() => setPrintQueue([proto])} title="Print" className="text-slate-500 hover:text-slate-200"><Printer className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => guard(`duplicate "${proto.name}"`, () => doDuplicate(proto))} title="Duplicate" className="text-slate-500 hover:text-slate-200"><Copy className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => removeProtocol(proto.id)} title="Delete" className="text-slate-600 hover:text-red-400"><Trash2 className="h-3.5 w-3.5" /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<HangingProtocolDesigner />);
+
+</script>
+</body>
+</html>
