@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="apple-mobile-web-app-title" content="ConfSched" />
+<title>Conference Hub</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    /* ---- UMB brand ---- */
+    --umb-red:#C8102E;
+    --umb-red-deep:#9c0c24;
+    --umb-gold:#FFCD00;
+    --umb-teal:#007698;
+    --umb-teal-deep:#005a74;
+    /* ---- neutrals (secondary text darkened to pass WCAG AA on white) ---- */
+    --bg:#f3f2f0;
+    --surface:#ffffff;
+    --ink:#1b1b1e;
+    --ink-2:#5b5b62;      /* ~5.3:1 on white — replaces the old #969496 (failed AA) */
+    --hair:#ececec;
+    --hair-2:#f4f4f4;
+    /* ---- type ---- */
+    --font-display:"SF Pro Display","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --font-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,monospace;
+    --radius:20px;
+    --shadow:0 8px 30px rgba(20,20,25,.07);
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family:var(--font-body);
+    background:var(--bg); color:var(--ink);
+    margin:0; -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    background:var(--umb-red);
+    border-bottom:3px solid var(--umb-gold);
+    color:#fff; position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; gap:12px;
+    padding:14px 16px; min-height:56px;
+  }
+  .back-btn{
+    background:none;border:none;color:#fff;cursor:pointer;
+    font-size:26px;line-height:1;font-weight:700;padding:4px 8px;
+    display:none;border-radius:10px;
+  }
+  .back-btn:focus-visible{outline:3px solid var(--umb-gold);outline-offset:2px}
+  .brand{
+    font-family:var(--font-display); flex-grow:1;
+    font-size:.95rem; letter-spacing:2.5px; text-transform:uppercase;
+    font-weight:800; margin:0;
+  }
+  .id-chip{
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25);
+    color:#fff; border-radius:999px; padding:6px 12px 6px 6px;
+    font:600 .78rem/1 var(--font-body); cursor:pointer; white-space:nowrap;
+  }
+  .id-chip:hover{background:rgba(255,255,255,.2)}
+  .id-chip:focus-visible{outline:3px solid var(--umb-gold);outline-offset:2px}
+  .avatar{
+    width:26px;height:26px;border-radius:50%;background:var(--umb-gold);
+    color:var(--umb-red-deep); display:grid;place-items:center;
+    font:800 .72rem/1 var(--font-display); letter-spacing:0;
+  }
+
+  /* ---------- Layout ---------- */
+  .container{max-width:640px;margin:0 auto;padding:18px 16px 60px}
+  .greeting{
+    font-family:var(--font-display); font-weight:800;
+    font-size:1.5rem; letter-spacing:-.02em; margin:6px 2px 18px;
+  }
+  .greeting small{display:block;font:500 .8rem/1.4 var(--font-body);color:var(--ink-2);letter-spacing:0;margin-top:4px}
+
+  .eyebrow{
+    font:800 .72rem/1 var(--font-display); letter-spacing:2.5px;
+    text-transform:uppercase; color:var(--umb-red); margin:26px 2px 12px;
+  }
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--surface); border-radius:var(--radius);
+    box-shadow:var(--shadow); border:1px solid #efeeec;
+  }
+  .hero{position:relative; overflow:hidden; padding:22px 22px 20px}
+  .hero::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--umb-gold)}
+  .hero-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .badge{
+    font:800 .68rem/1 var(--font-display); letter-spacing:1.5px; text-transform:uppercase;
+    background:var(--umb-gold); color:var(--umb-red-deep);
+    padding:6px 10px; border-radius:7px;
+  }
+  .badge.next{background:#eaf4f7;color:var(--umb-teal-deep)}
+  .stamp{
+    font:600 .8rem/1 var(--font-mono); color:var(--ink-2);
+    letter-spacing:.5px;
+  }
+
+  /* segmented AM/PM */
+  .segment{display:flex;background:#eef0f1;border-radius:999px;padding:4px;margin:4px 0 18px}
+  .segment button{
+    flex:1;border:none;background:none;cursor:pointer;
+    padding:11px;border-radius:999px;
+    font:800 .78rem/1 var(--font-display);letter-spacing:1px;color:var(--ink-2);
+  }
+  .segment button[aria-pressed="true"]{background:#fff;color:var(--umb-teal-deep);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .segment button:focus-visible{outline:3px solid var(--umb-teal);outline-offset:2px}
+
+  .lecture-title{
+    font-family:var(--font-display); font-weight:800;
+    font-size:1.35rem; line-height:1.25; letter-spacing:-.01em;
+    margin:2px 0 18px; color:var(--ink);
+  }
+  .lecture-title.empty{color:var(--ink-2);font-weight:600;font-size:1.1rem}
+
+  .join-row{display:flex;gap:14px;align-items:stretch;margin-bottom:16px}
+  .btn{
+    font:800 .9rem/1 var(--font-display); letter-spacing:.3px;
+    border:none;border-radius:12px;cursor:pointer;padding:14px 18px;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    text-decoration:none;
+  }
+  .btn:focus-visible{outline:3px solid var(--umb-gold);outline-offset:2px}
+  .btn-join{background:var(--umb-teal);color:#fff;flex:1}
+  .btn-join:hover{background:var(--umb-teal-deep)}
+  .btn-eval{background:#fff;color:var(--umb-teal-deep);border:2px solid var(--umb-teal);width:100%}
+  .btn-eval:hover{background:#f4fafc}
+  .btn-eval.done{border-color:#2e9e5b;color:#207a44;background:#f2fbf5}
+
+  .qr-box{
+    background:#fff;border:1px solid var(--hair);border-radius:12px;
+    padding:8px;display:grid;place-items:center;cursor:pointer;flex-shrink:0;
+    width:88px;height:88px;
+  }
+  .qr-box:focus-visible{outline:3px solid var(--umb-teal);outline-offset:2px}
+  .qr-box img,.qr-box canvas{width:100%!important;height:100%!important;display:block}
+  .qr-box .qr-hint{font:600 .62rem/1.2 var(--font-body);color:var(--ink-2);text-align:center;padding:6px}
+
+  /* credentials */
+  .creds{border-top:1px solid var(--hair-2);margin-top:4px;padding-top:16px}
+  .cred{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .cred:last-child{margin-bottom:0}
+  .cred-label{font:800 .66rem/1 var(--font-display);letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-2);width:78px;flex-shrink:0}
+  .cred-val{font:600 .92rem/1 var(--font-mono);color:var(--ink);flex-grow:1;word-break:break-all}
+  .copy{
+    background:#f1f3f4;border:none;border-radius:8px;cursor:pointer;
+    font:700 .68rem/1 var(--font-display);color:var(--umb-teal-deep);
+    padding:7px 10px;flex-shrink:0;letter-spacing:.3px;
+  }
+  .copy:hover{background:#e6eef1}
+  .copy:focus-visible{outline:3px solid var(--umb-teal);outline-offset:2px}
+  .copy.copied{background:#e8f7ee;color:#207a44}
+
+  /* ---------- Week list ---------- */
+  .day-row{
+    display:flex;align-items:center;gap:16px;width:100%;text-align:left;
+    background:none;border:none;cursor:pointer;
+    padding:16px 18px;border-bottom:1px solid var(--hair-2);
+    font-family:inherit;
+  }
+  .day-row:last-child{border-bottom:none}
+  .day-row:hover{background:#faf9f8}
+  .day-row:focus-visible{outline:3px solid var(--umb-teal);outline-offset:-3px;border-radius:8px}
+  .day-stamp{
+    font:700 .74rem/1.3 var(--font-mono);color:var(--umb-red);
+    width:64px;flex-shrink:0;letter-spacing:.3px;text-align:center;
+  }
+  .day-titles{flex-grow:1;overflow:hidden}
+  .day-titles div{
+    font:600 .85rem/1.4 var(--font-body);color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .day-titles div span{color:var(--ink-2);font-weight:800;font-size:.68rem;letter-spacing:.5px;margin-right:6px}
+  .chev{color:var(--ink-2);font-size:20px;flex-shrink:0}
+
+  /* ---------- Status / empty ---------- */
+  #status{text-align:center;color:var(--ink-2);font-weight:600;padding:80px 20px}
+  .spinner{
+    width:34px;height:34px;border-radius:50%;margin:0 auto 16px;
+    border:3px solid #e2e0dd;border-top-color:var(--umb-red);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty-hero{text-align:center;padding:30px 10px;color:var(--ink-2)}
+  .empty-hero .big{font:800 1.1rem/1.3 var(--font-display);color:var(--ink);margin-bottom:4px}
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,20,25,.5);
+    display:none;align-items:flex-end;justify-content:center;z-index:100;padding:0;
+  }
+  .overlay.open{display:flex}
+  .sheet{
+    background:#fff;width:100%;max-width:560px;border-radius:22px 22px 0 0;
+    padding:24px 22px calc(24px + env(safe-area-inset-bottom));
+    max-height:90vh;overflow-y:auto;
+    animation:rise .28s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes rise{from{transform:translateY(30px);opacity:.6}to{transform:translateY(0);opacity:1}}
+  .sheet h2{font:800 1.2rem/1.2 var(--font-display);letter-spacing:-.01em;margin:0 0 4px}
+  .sheet .sub{color:var(--ink-2);font-size:.85rem;margin:0 0 20px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font:800 .7rem/1 var(--font-display);letter-spacing:1px;text-transform:uppercase;color:var(--ink-2);margin-bottom:7px}
+  .field input,.field select{
+    width:100%;padding:13px 14px;border:1.5px solid #dcdad7;border-radius:11px;
+    font:500 1rem/1 var(--font-body);color:var(--ink);background:#fff;
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--umb-teal)}
+  .row2{display:flex;gap:12px}.row2 .field{flex:1}
+  .modal-btns{display:flex;gap:12px;margin-top:8px}
+  .divider{display:flex;align-items:center;gap:12px;color:var(--ink-2);font:600 .72rem/1 var(--font-body);letter-spacing:1px;margin:20px 0;text-transform:uppercase}
+  .divider::before,.divider::after{content:"";height:1px;background:var(--hair);flex:1}
+  .btn-primary{background:var(--umb-red);color:#fff;flex:1}
+  .btn-primary:hover{background:var(--umb-red-deep)}
+  .btn-ghost{background:#f1f3f4;color:var(--ink);flex:1}
+  .btn-ghost:hover{background:#e9ebec}
+  .lookup-msg{font:600 .8rem/1.4 var(--font-body);margin:-4px 0 14px}
+  .lookup-msg.ok{color:#207a44}.lookup-msg.err{color:var(--umb-red)}
+
+  /* eval preview */
+  .demo-note{
+    background:#fff7db;border:1px solid #ffe27a;border-radius:12px;
+    padding:12px 14px;font:600 .8rem/1.45 var(--font-body);color:#6b5600;margin-bottom:18px;
+  }
+  .map-table{border:1px solid var(--hair);border-radius:12px;overflow:hidden;margin-bottom:18px}
+  .map-row{display:flex;gap:12px;padding:10px 14px;border-bottom:1px solid var(--hair-2);align-items:baseline}
+  .map-row:last-child{border-bottom:none}
+  .map-row:nth-child(odd){background:#fbfaf9}
+  .map-k{font:800 .64rem/1.3 var(--font-display);letter-spacing:.6px;text-transform:uppercase;color:var(--ink-2);width:118px;flex-shrink:0}
+  .map-v{font:600 .82rem/1.35 var(--font-mono);color:var(--ink);word-break:break-word;flex-grow:1}
+  .map-v.user{color:var(--umb-teal-deep);font-family:var(--font-body);font-weight:700}
+  .url-box{font:500 .72rem/1.5 var(--font-mono);background:#f6f5f3;border:1px solid var(--hair);border-radius:10px;padding:12px;word-break:break-all;color:var(--ink-2);margin-bottom:16px}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+  @media (max-width:420px){
+    .join-row{flex-direction:column}
+    .qr-box{width:100%;height:auto;aspect-ratio:1;max-width:220px;margin:0 auto}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <button id="backBtn" class="back-btn" onclick="showHome()" aria-label="Back to schedule">←</button>
+    <h1 class="brand">Conference Hub</h1>
+    <button id="idChip" class="id-chip" onclick="openIdentity()" aria-label="Set your identity">
+      <span class="avatar" id="avatar">?</span>
+      <span id="idChipLabel">Set ID</span>
+    </button>
+  </header>
+
+  <div class="container">
+    <div id="status" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      Loading this week&rsquo;s schedule&hellip;
+    </div>
+
+    <!-- HOME -->
+    <div id="homeView" style="display:none">
+      <p class="greeting" id="greeting" aria-live="polite"></p>
+      <div id="heroSlot"></div>
+      <p class="eyebrow" id="weekEyebrow" style="display:none">The rest of this week</p>
+      <div class="card" id="weekList" style="display:none"></div>
+    </div>
+
+    <!-- DETAIL -->
+    <div id="detailView" style="display:none">
+      <div class="card hero" id="detailHero"></div>
+    </div>
+  </div>
+
+  <!-- IDENTITY MODAL -->
+  <div class="overlay" id="idOverlay" role="dialog" aria-modal="true" aria-labelledby="idTitle">
+    <div class="sheet">
+      <h2 id="idTitle">Who&rsquo;s attending?</h2>
+      <p class="sub">Set your identity once to submit lecture evaluations. Stored on this device only.</p>
+
+      <div class="field">
+        <label for="idInput">Attendee ID</label>
+        <input id="idInput" inputmode="numeric" autocomplete="off" placeholder="e.g. 1001" />
+      </div>
+      <p class="lookup-msg" id="lookupMsg" style="display:none"></p>
+      <div class="modal-btns">
+        <button class="btn btn-primary" onclick="lookupId()">Find me</button>
+        <button class="btn btn-ghost" onclick="closeIdentity()">Cancel</button>
+      </div>
+
+      <div class="divider">or continue as guest</div>
+
+      <div class="row2">
+        <div class="field"><label for="gFirst">First name</label><input id="gFirst" autocomplete="given-name" /></div>
+        <div class="field"><label for="gLast">Last name</label><input id="gLast" autocomplete="family-name" /></div>
+      </div>
+      <div class="field">
+        <label for="gCred">Credential</label>
+        <input id="gCred" placeholder="MD, DO, RN, PA&hellip;" autocomplete="off" />
+      </div>
+      <div class="modal-btns">
+        <button class="btn btn-ghost" onclick="saveGuest()">Continue as guest</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVAL PREVIEW MODAL -->
+  <div class="overlay" id="evalOverlay" role="dialog" aria-modal="true" aria-labelledby="evalTitle">
+    <div class="sheet">
+      <h2 id="evalTitle">Evaluate session</h2>
+      <p class="sub" id="evalSub"></p>
+      <div id="evalBody"></div>
+    </div>
+  </div>
+
+<script>
+/* ============================================================================
+   CONFIG  —  the only block you edit when the roster sheet & Google Form exist.
+   ============================================================================ */
+const CONFIG = {
+  schedule: {
+    sheetId: "1gNy8iWiCZ8t-A_CYoIfBCJqJUrqwiByhzJ0-e0df9as",
+    gid: "0",                       // "This Week" tab
+    col: { date: 0, am: 2, pm: 4 }  // A=date, C=AM, E=PM
+  },
+
+  // ---- Roster lookup ----------------------------------------------------
+  // Leave sheetId "" to run on the built-in demoRoster below.
+  // When your published roster sheet exists, paste its id + gid and map columns.
+  roster: {
+    sheetId: "",
+    gid: "0",
+    col: { id: 0, first: 1, last: 2, credential: 3 }
+  },
+
+  // ---- Evaluation form --------------------------------------------------
+  // Leave formBase "" to run in preview mode (shows the field map, no submit).
+  // When your Google Form exists: paste its prefilled base (…/viewform) and
+  // map every field to its entry.XXXXXXX id from the prefilled link.
+  eval: {
+    formBase: "",
+    entry: {
+      rating:       "entry.RATING",
+      comment:      "entry.COMMENT",
+      name:         "entry.NAME",
+      credential:   "entry.CRED",
+      title:        "entry.TITLE",
+      date:         "entry.DATE",
+      session:      "entry.SESSION",
+      sessionKey:   "entry.KEY",
+      identityType: "entry.IDTYPE",
+      evaluatorId:  "entry.EVALID",
+      device:       "entry.DEVICE"
+    }
+  },
+
+  // Sample roster — used ONLY while roster.sheetId is empty.
+  demoRoster: [
+    { id:"1001", first:"Jean",  last:"Baptiste", credential:"MD" },
+    { id:"1002", first:"Maria", last:"Alvarez",  credential:"DO" },
+    { id:"1003", first:"Aisha", last:"Khan",     credential:"RN" },
+    { id:"1004", first:"David", last:"Okafor",   credential:"PA" }
+  ]
+};
+
+/* ---------- device-safe storage (degrades to memory if blocked) ---------- */
+const store = (() => {
+  let mem = {}, ok = true;
+  try { localStorage.setItem("__t","1"); localStorage.removeItem("__t"); }
+  catch(e){ ok = false; }
+  return {
+    get:(k)=>{ try{ return ok ? localStorage.getItem(k) : (mem[k] ?? null); }catch(e){ return mem[k] ?? null; } },
+    set:(k,v)=>{ try{ ok ? localStorage.setItem(k,v) : (mem[k]=v); }catch(e){ mem[k]=v; } }
+  };
+})();
+
+const DEVICE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? "Mobile" : "Desktop";
+const CACHE_KEY = "confsched.schedule.v1";
+const ID_KEY    = "confsched.identity.v1";
+const EVAL_KEY  = "confsched.evals.v1";
+
+let schedule = [];
+let identity = loadIdentity();
+let heroIndex = -1;
+let detailIdx = 0, detailSession = "AM";
+let qr = null, qrDetail = null;
+let lastFocus = null;
+
+/* ============================ DATA ============================ */
+function gvizUrl(id, gid){
+  return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&gid=${gid}`;
+}
+function parseGviz(text){
+  // robust: strip the google.visualization.Query.setResponse( … ); wrapper
+  const json = JSON.parse(text.replace(/^[^{]*\(/, "").replace(/\);?\s*$/, ""));
+  return json.table.rows;
+}
+
+async function init(){
+  const cached = readCache();
+  if (cached){ schedule = cached; renderAll(); }      // stale-while-revalidate
+  try {
+    const res  = await fetch(gvizUrl(CONFIG.schedule.sheetId, CONFIG.schedule.gid));
+    const rows = parseGviz(await res.text());
+    schedule = rows.map(mapRow).filter(Boolean);
+    writeCache(schedule);
+    renderAll();
+  } catch(e){
+    if (!schedule.length){
+      document.getElementById("status").innerHTML =
+        '<div class="empty-hero"><div class="big">Couldn&rsquo;t reach the schedule</div>' +
+        'Check your connection and try again.</div>';
+    }
+  }
+}
+
+function mapRow(r){
+  const c = CONFIG.schedule.col;
+  const dateVal = r.c[c.date] ? r.c[c.date].v : null;
+  if (!(dateVal && typeof dateVal === "string" && dateVal.startsWith("Date"))) return null;
+  const p = dateVal.match(/\d+/g);
+  const d = new Date(+p[0], +p[1], +p[2]);
+  return {
+    y:+p[0], m:+p[1], d:+p[2],
+    iso: `${p[0]}-${String(+p[1]+1).padStart(2,"0")}-${String(+p[2]).padStart(2,"0")}`,
+    stampFull: fmtStamp(d),
+    stampShort:`${["SUN","MON","TUE","WED","THU","FRI","SAT"][d.getDay()]} ${String(d.getDate()).padStart(2,"0")}`,
+    AM: parseContent(r.c[c.am] ? r.c[c.am].v : ""),
+    PM: parseContent(r.c[c.pm] ? r.c[c.pm].v : "")
+  };
+}
+
+function fmtStamp(d){
+  const days=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+  const mon=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return `${days[d.getDay()]} · ${mon[d.getMonth()]} ${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function parseContent(text){
+  if (!text || /no conference/i.test(text))
+    return { title:"No conference scheduled", url:"", meetingId:"", passcode:"", raw:"" };
+  const lines = text.split("\n").map(s=>s.trim()).filter(Boolean);
+  const urlMatch = text.match(/https?:\/\/[^\s]+/);
+  const url = urlMatch ? urlMatch[0].replace(/[).,;]+$/,"") : "";
+  const idLine   = lines.find(l => /\bID\b|meeting id/i.test(l)) || "";
+  const passLine = lines.find(l => /passcode|password/i.test(l)) || "";
+  const idM   = idLine.match(/([\d][\d\s]{6,})/);
+  const passM = passLine.match(/(?:passcode|password)[:\s]*([^\s|]+)/i);
+  return {
+    title: lines[0] || "Untitled session",
+    url,
+    meetingId: idM ? idM[1].trim() : "",
+    passcode:  passM ? passM[1].trim() : "",
+    raw: [idLine, passLine].filter(Boolean).join("  ·  ")
+  };
+}
+
+function readCache(){ try{ const v=store.get(CACHE_KEY); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function writeCache(s){ try{ store.set(CACHE_KEY, JSON.stringify(s)); }catch(e){} }
+
+/* ============================ RENDER ============================ */
+function renderAll(){
+  document.getElementById("status").style.display = "none";
+  document.getElementById("homeView").style.display = "block";
+  heroIndex = pickHeroIndex();
+  renderGreeting();
+  renderHero();
+  renderWeek();
+}
+
+function pickHeroIndex(){
+  const now = new Date();
+  const t = { y:now.getFullYear(), m:now.getMonth(), d:now.getDate() };
+  let exact = schedule.findIndex(s => s.y===t.y && s.m===t.m && s.d===t.d);
+  if (exact !== -1) return exact;
+  // else next upcoming (>= today)
+  const key = t.y*10000 + t.m*100 + t.d;
+  let next = schedule.findIndex(s => (s.y*10000+s.m*100+s.d) >= key);
+  return next !== -1 ? next : 0;
+}
+function isToday(i){
+  const now=new Date();
+  const s=schedule[i];
+  return s && s.y===now.getFullYear() && s.m===now.getMonth() && s.d===now.getDate();
+}
+
+function renderGreeting(){
+  const g = document.getElementById("greeting");
+  if (identity){
+    g.innerHTML = `Hi, ${escapeHtml(identity.first)}.` +
+      `<small>${identity.type==="guest"?"Signed in as guest":"Attendee "+escapeHtml(identity.id)}</small>`;
+  } else {
+    g.innerHTML = `Welcome.<small>Set your ID to enable lecture evaluations.</small>`;
+  }
+}
+
+function defaultSession(){ return new Date().getHours() < 12 ? "AM" : "PM"; }
+
+function renderHero(){
+  const slot = document.getElementById("heroSlot");
+  if (!schedule.length){ slot.innerHTML = ""; return; }
+  const idx = heroIndex;
+  const badge = isToday(idx)
+    ? `<span class="badge">Today</span>`
+    : `<span class="badge next">Next up</span>`;
+  slot.innerHTML = `<div class="card hero" id="heroCard"></div>`;
+  paintSession("heroCard", idx, defaultSession(), badge);
+}
+
+function renderWeek(){
+  const list = document.getElementById("weekList");
+  const eyebrow = document.getElementById("weekEyebrow");
+  const others = schedule.map((_,i)=>i).filter(i => i!==heroIndex);
+  if (!others.length){ list.style.display="none"; eyebrow.style.display="none"; return; }
+  list.style.display="block"; eyebrow.style.display="block";
+  list.innerHTML = "";
+  others.forEach(i=>{
+    const day = schedule[i];
+    const b = document.createElement("button");
+    b.className = "day-row";
+    b.setAttribute("aria-label", `${day.stampFull}. AM: ${day.AM.title}. PM: ${day.PM.title}. Open detail.`);
+    b.onclick = ()=>openDetail(i);
+    b.innerHTML = `
+      <div class="day-stamp">${day.stampShort}</div>
+      <div class="day-titles">
+        <div><span>AM</span>${escapeHtml(day.AM.title)}</div>
+        <div><span>PM</span>${escapeHtml(day.PM.title)}</div>
+      </div>
+      <div class="chev" aria-hidden="true">›</div>`;
+    list.appendChild(b);
+  });
+}
+
+/* paints a session card into container id (hero or detail) */
+function paintSession(containerId, idx, session, badgeHtml){
+  const day = schedule[idx];
+  const data = day[session];
+  const done = alreadyEvaluated(day.iso, session);
+  const stamp = `${day.stampFull} · ${session}`;
+
+  const creds = [];
+  if (data.meetingId) creds.push(credRow("ID", data.meetingId));
+  if (data.passcode)  creds.push(credRow("Passcode", data.passcode));
+  if (!creds.length && data.raw) creds.push(`<div class="cred"><span class="cred-val">${escapeHtml(data.raw)}</span></div>`);
+
+  const hasLink = !!data.url;
+  const c = document.getElementById(containerId);
+  c.innerHTML = `
+    <div class="hero-top">${badgeHtml||""}<span class="stamp">${stamp}</span></div>
+    <div class="segment" role="tablist" aria-label="Session">
+      <button role="tab" aria-pressed="${session==='AM'}" onclick="switchSession('${containerId}',${idx},'AM')">AM</button>
+      <button role="tab" aria-pressed="${session==='PM'}" onclick="switchSession('${containerId}',${idx},'PM')">PM</button>
+    </div>
+    <h2 class="lecture-title ${data.title.startsWith('No conference')?'empty':''}" tabindex="-1" id="${containerId}-title">${escapeHtml(data.title)}</h2>
+    ${ hasLink ? `
+      <div class="join-row">
+        <a class="btn btn-join" href="${escapeAttr(data.url)}" target="_blank" rel="noopener">Join Zoom ↗</a>
+        <div class="qr-box" id="${containerId}-qr" tabindex="0" role="button" aria-label="QR code to join by phone"></div>
+      </div>
+      ${creds.length ? `<div class="creds">${creds.join("")}</div>` : ""}
+      <div style="margin-top:16px">
+        <button class="btn btn-eval ${done?'done':''}" onclick="startEval(${idx},'${session}')">
+          ${done ? "✓ Evaluated · re-open form" : "Evaluate this session"}
+        </button>
+      </div>` : `<div class="empty-hero">Nothing to join for this session.</div>` }
+  `;
+  // render QR after DOM insert
+  if (hasLink){
+    const box = document.getElementById(`${containerId}-qr`);
+    box.innerHTML = "";
+    /* eslint-disable no-new */
+    new QRCode(box, { text:data.url, width:200, height:200, correctLevel:QRCode.CorrectLevel.M });
+    box.setAttribute("aria-hidden","true"); // link is the accessible path; QR is decorative
+    box.onclick = ()=> window.open(data.url,"_blank","noopener");
+    box.onkeydown = (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); window.open(data.url,"_blank","noopener"); } };
+  }
+}
+
+function credRow(label,val){
+  return `<div class="cred">
+    <span class="cred-label">${label}</span>
+    <span class="cred-val">${escapeHtml(val)}</span>
+    <button class="copy" onclick="copyVal(this,'${escapeAttr(val)}')">Copy</button>
+  </div>`;
+}
+
+function switchSession(containerId, idx, session){
+  const badge = containerId==="heroCard"
+    ? (isToday(idx) ? `<span class="badge">Today</span>` : `<span class="badge next">Next up</span>`)
+    : "";
+  paintSession(containerId, idx, session, badge);
+  if (containerId==="detailHero") detailSession = session;
+}
+
+/* ============================ DETAIL VIEW ============================ */
+function openDetail(idx){
+  lastFocus = document.activeElement;
+  detailIdx = idx; detailSession = defaultSession();
+  document.getElementById("homeView").style.display="none";
+  document.getElementById("detailView").style.display="block";
+  document.getElementById("backBtn").style.display="inline-block";
+  document.querySelector(".brand").textContent = "Session Detail";
+  paintSession("detailHero", idx, detailSession, "");
+  const t = document.getElementById("detailHero-title");
+  if (t) t.focus();
+}
+function showHome(){
+  document.getElementById("detailView").style.display="none";
+  document.getElementById("homeView").style.display="block";
+  document.getElementById("backBtn").style.display="none";
+  document.querySelector(".brand").textContent = "Conference Hub";
+  if (lastFocus) lastFocus.focus();
+}
+
+/* ============================ IDENTITY ============================ */
+function loadIdentity(){ try{ const v=store.get(ID_KEY); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function saveIdentity(obj){ identity=obj; store.set(ID_KEY, JSON.stringify(obj)); refreshChip(); renderGreeting(); }
+function refreshChip(){
+  const av=document.getElementById("avatar"), lb=document.getElementById("idChipLabel");
+  if (identity){
+    av.textContent = (identity.first[0]||"?").toUpperCase();
+    lb.textContent = identity.first;
+  } else { av.textContent="?"; lb.textContent="Set ID"; }
+}
+let pendingEval = null; // {idx, session} to resume after identity is set
+
+function openIdentity(){
+  lastFocus = document.activeElement;
+  document.getElementById("lookupMsg").style.display="none";
+  document.getElementById("idOverlay").classList.add("open");
+  document.getElementById("idInput").focus();
+}
+function closeIdentity(){
+  document.getElementById("idOverlay").classList.remove("open");
+  if (lastFocus) lastFocus.focus();
+}
+async function resolveRoster(id){
+  if (!CONFIG.roster.sheetId){
+    return CONFIG.demoRoster.find(r=>r.id===id) || null;
+  }
+  const rows = parseGviz(await (await fetch(gvizUrl(CONFIG.roster.sheetId, CONFIG.roster.gid))).text());
+  const col = CONFIG.roster.col;
+  const match = rows.find(r => r.c[col.id] && String(r.c[col.id].v).trim() === id);
+  if (!match) return null;
+  return {
+    id,
+    first: val(match,col.first), last: val(match,col.last), credential: val(match,col.credential)
+  };
+  function val(r,i){ return r.c[i] && r.c[i].v!=null ? String(r.c[i].v).trim() : ""; }
+}
+async function lookupId(){
+  const id = document.getElementById("idInput").value.trim();
+  const msg = document.getElementById("lookupMsg");
+  if (!id){ return; }
+  msg.style.display="block"; msg.className="lookup-msg"; msg.textContent="Looking up…";
+  try {
+    const rec = await resolveRoster(id);
+    if (!rec){
+      msg.className="lookup-msg err";
+      msg.textContent = "ID not found. Check the number, or continue as guest below.";
+      return;
+    }
+    saveIdentity({ type:"roster", id:rec.id, first:rec.first, last:rec.last, credential:rec.credential });
+    afterIdentitySet();
+  } catch(e){
+    msg.className="lookup-msg err";
+    msg.textContent = "Lookup failed. You can continue as guest below.";
+  }
+}
+function saveGuest(){
+  const first=document.getElementById("gFirst").value.trim();
+  const last =document.getElementById("gLast").value.trim();
+  const cred =document.getElementById("gCred").value.trim();
+  if (!first){ document.getElementById("gFirst").focus(); return; }
+  saveIdentity({ type:"guest", id:"", first, last, credential:cred });
+  afterIdentitySet();
+}
+function afterIdentitySet(){
+  closeIdentity();
+  if (pendingEval){ const {idx,session}=pendingEval; pendingEval=null; startEval(idx,session); }
+}
+
+/* ============================ EVALUATION ============================ */
+function evalRecordKey(iso,session){
+  const who = identity ? (identity.type==="roster" ? "id:"+identity.id : "guest:"+identity.first+identity.last) : "anon";
+  return `${who}|${iso}|${session}`;
+}
+function alreadyEvaluated(iso,session){
+  try{ const set=JSON.parse(store.get(EVAL_KEY)||"[]"); return set.includes(evalRecordKey(iso,session)); }
+  catch(e){ return false; }
+}
+function markEvaluated(iso,session){
+  try{
+    const set=JSON.parse(store.get(EVAL_KEY)||"[]");
+    const k=evalRecordKey(iso,session);
+    if(!set.includes(k)){ set.push(k); store.set(EVAL_KEY, JSON.stringify(set)); }
+  }catch(e){}
+}
+
+function buildEvalFields(idx, session){
+  const day = schedule[idx];
+  const data = day[session];
+  const name = identity ? `${identity.first} ${identity.last}`.trim() : "";
+  return {
+    rating:       "",                         // user enters on form
+    comment:      "",                         // user enters on form
+    name,
+    credential:   identity ? identity.credential : "",
+    title:        data.title,
+    date:         day.stampFull,
+    session,
+    sessionKey:   `${day.iso}|${session}`,
+    identityType: identity ? identity.type : "guest",
+    evaluatorId:  identity && identity.type==="roster" ? identity.id : "",
+    device:       DEVICE
+  };
+}
+function buildPrefillUrl(fields){
+  const e = CONFIG.eval.entry;
+  const params = new URLSearchParams({ usp:"pp_url" });
+  Object.keys(e).forEach(k=>{ if(fields[k]!=null && fields[k]!=="") params.append(e[k], fields[k]); });
+  return `${CONFIG.eval.formBase}?${params.toString()}`;
+}
+
+function startEval(idx, session){
+  if (!identity){                 // identity is required only at eval time
+    pendingEval = { idx, session };
+    openIdentity();
+    document.getElementById("lookupMsg").style.display="block";
+    document.getElementById("lookupMsg").className="lookup-msg";
+    document.getElementById("lookupMsg").textContent="Set your identity to submit an evaluation.";
+    return;
+  }
+  const fields = buildEvalFields(idx, session);
+  const configured = !!CONFIG.eval.formBase;
+
+  const labels = {
+    rating:"Rating", comment:"Comment", name:"Name", credential:"Credential",
+    title:"Lecture title", date:"Date", session:"Session", sessionKey:"Session key",
+    identityType:"Identity type", evaluatorId:"Evaluator ID", device:"Device"
+  };
+  const rows = Object.keys(labels).map(k=>{
+    const userFilled = (k==="rating"||k==="comment");
+    const v = userFilled ? "you enter on the form" : (fields[k]==="" ? "—" : fields[k]);
+    return `<div class="map-row"><div class="map-k">${labels[k]}</div>
+            <div class="map-v ${userFilled?'user':''}">${escapeHtml(v)}</div></div>`;
+  }).join("");
+
+  const body = document.getElementById("evalBody");
+  document.getElementById("evalSub").textContent =
+    `${fields.title} — ${fields.date} ${fields.session}`;
+
+  if (configured){
+    const url = buildPrefillUrl(fields);
+    body.innerHTML = `
+      <div class="map-table">${rows}</div>
+      <button class="btn btn-primary" style="width:100%" onclick="openForm('${escapeAttr(url)}','${schedule[idx].iso}','${session}')">
+        Open evaluation form ↗
+      </button>`;
+  } else {
+    const url = "https://docs.google.com/forms/…/viewform?" +
+      new URLSearchParams(Object.fromEntries(
+        Object.entries(CONFIG.eval.entry)
+          .filter(([k])=>fields[k]!=="" )
+          .map(([k,eid])=>[eid, fields[k]])
+      )).toString();
+    body.innerHTML = `
+      <div class="demo-note"><b>Preview mode.</b> No Google Form is wired up yet, so nothing is sent.
+      This is exactly what will be prefilled once you paste your form&rsquo;s base URL and
+      <code>entry</code> IDs into <b>CONFIG.eval</b>.</div>
+      <div class="map-table">${rows}</div>
+      <div class="map-k" style="width:auto;margin-bottom:6px">Prefill URL (placeholder IDs)</div>
+      <div class="url-box">${escapeHtml(url)}</div>
+      <button class="btn btn-ghost" style="width:100%" onclick="closeEval()">Close preview</button>`;
+  }
+  lastFocus = document.activeElement;
+  document.getElementById("evalOverlay").classList.add("open");
+}
+function openForm(url, iso, session){
+  window.open(url, "_blank", "noopener");
+  markEvaluated(iso, session);
+  closeEval();
+  // repaint whichever card is visible so the "✓ Evaluated" state shows
+  if (document.getElementById("detailView").style.display==="block")
+    paintSession("detailHero", detailIdx, detailSession, "");
+  else
+    renderHero();
+}
+function closeEval(){
+  document.getElementById("evalOverlay").classList.remove("open");
+  if (lastFocus) lastFocus.focus();
+}
+
+/* ============================ UTIL ============================ */
+function copyVal(btn, val){
+  const done=()=>{ btn.textContent="Copied"; btn.classList.add("copied"); setTimeout(()=>{btn.textContent="Copy";btn.classList.remove("copied");},1400); };
+  if (navigator.clipboard) navigator.clipboard.writeText(val).then(done, done);
+  else done();
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function escapeAttr(s){ return String(s).replace(/'/g,"\\'").replace(/"/g,"&quot;"); }
+
+/* close overlays on backdrop click / Esc */
+["idOverlay","evalOverlay"].forEach(id=>{
+  document.getElementById(id).addEventListener("click",e=>{ if(e.target.id===id){ e.target.classList.remove("open"); if(lastFocus)lastFocus.focus(); } });
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ document.querySelectorAll(".overlay.open").forEach(o=>o.classList.remove("open")); } });
+
+refreshChip();
+init();
+</script>
+</body>
+</html>
