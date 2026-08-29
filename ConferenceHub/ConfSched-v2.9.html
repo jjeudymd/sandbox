@@ -277,22 +277,22 @@ const CONFIG = {
     col: { id:0, last:1, first:2, role:3 }
   },
 
-  // Evaluation Google Form — LIVE (wired 3.3).
+  // Evaluation Google Form. Leave formBase "" for preview mode (field map, no submit).
   eval: {
-    formBase: "https://docs.google.com/forms/d/e/1FAIpQLSeTgdVcy5QfCFTpfe0UnwtzPuHsp9z0pE5JUw1edNQRBwfi2Q/viewform",
+    formBase: "",
     entry: {
-      rating:       "entry.1032493625",
-      comment:      "entry.685893802",
-      name:         "entry.1278790392",
-      role:         "entry.71799739",
-      location:     "entry.1857761373",   // prefilled multiple-choice — see locations[] below
-      title:        "entry.823019032",
-      date:         "entry.1045146947",
-      session:      "entry.660575914",
-      sessionKey:   "entry.601768997",
-      identityType: "entry.31165868",
-      evaluatorId:  "entry.118702268",
-      device:       "entry.2076781252"
+      rating:       "entry.RATING",
+      comment:      "entry.COMMENT",
+      name:         "entry.NAME",
+      role:         "entry.ROLE",
+      location:     "entry.LOCATION",   // prefilled multiple-choice — see locations[] below
+      title:        "entry.TITLE",
+      date:         "entry.DATE",
+      session:      "entry.SESSION",
+      sessionKey:   "entry.KEY",
+      identityType: "entry.IDTYPE",
+      evaluatorId:  "entry.EVALID",
+      device:       "entry.DEVICE"
     }
   },
 
