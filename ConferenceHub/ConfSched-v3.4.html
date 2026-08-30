@@ -289,18 +289,15 @@ const CONFIG = {
     col: { id:0, last:1, first:2, role:3 }
   },
 
-  // Evaluation Google Form — packed single-section design (3.4).
-  // Rating & comment are collected in the app; everything else is joined into
-  // one "Details" field. Reduce the form to 3 fields: Rating, Comment, Details.
-  //   -> Keep your existing Rating & Comment questions (IDs below are unchanged).
-  //   -> Delete the other 10 questions, add ONE short-answer "Details" question,
-  //      then replace entry.DETAILS_TODO with its real entry id (prefilled link).
+  // Evaluation Google Form — LIVE, packed single-section design (wired 3.4).
+  // Rating & comment are collected in the app; all metadata is joined into the
+  // one "Details" field (see packOrder/packDelim below).
   eval: {
-    formBase: "https://docs.google.com/forms/d/e/1FAIpQLSeTgdVcy5QfCFTpfe0UnwtzPuHsp9z0pE5JUw1edNQRBwfi2Q/viewform",
+    formBase: "https://docs.google.com/forms/d/e/1FAIpQLSf2zyffm02vtj_b3IzbYMZab_B3M8nLoFW6dRgT07CQiJNHsA/viewform",
     entry: {
-      rating:  "entry.1032493625",   // existing Rating question
-      comment: "entry.685893802",    // existing Comment question
-      details: "entry.DETAILS_TODO"  // NEW packed field — paste its entry id here
+      rating:  "entry.777351063",
+      comment: "entry.1526582809",
+      details: "entry.755067852"
     }
   },
 
